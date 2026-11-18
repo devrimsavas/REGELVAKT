@@ -1,11 +1,18 @@
+import "reflect-metadata";
 import "dotenv/config";
 import app from "./app.js";
+import { sequelize } from "./config/database.js";
+import { migrator } from "./config/migrator.js";
 
 const PORT = process.env.PORT;
 
 const server = async () => {
   try {
-    // Database connection will be awaited here before listening.
+    await sequelize.authenticate();
+    console.log("Database connection established");
+
+    await migrator.up();
+
     app.listen(PORT, (error) => {
       if (error) {
         console.error(`Server failed to start: ${error.message}`);

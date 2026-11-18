@@ -8,6 +8,7 @@
     "start": "node dist/server.js",
     "predev": "npm run build",
     "dev": "concurrently \"tsc -w --preserveWatchOutput\" \"node --watch --watch-preserve-output dist/server.js\"",
+    "migrate": "node dist/migrate.js",
     "pretest": "tsc",
     "test": "vitest run",
     "test:watch": "vitest"
