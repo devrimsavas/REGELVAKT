@@ -1,5 +1,6 @@
 import { Sequelize } from "sequelize-typescript";
 import { requireEnv } from "./env.js";
+import { Assessment } from "../models/Assessment.js";
 
 export const sequelize = new Sequelize({
   dialect: "postgres",
@@ -9,6 +10,6 @@ export const sequelize = new Sequelize({
   username: requireEnv("DB_USER"),
   password: requireEnv("DB_PASSWORD"),
   // Models are listed here one by one as they are added
-  models: [],
+  models: [Assessment],
   logging: false,
 });

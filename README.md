@@ -1,12 +1,12 @@
 # Regelvakt
 
-Regelvakt shows small Norwegian businesses which official obligations apply to *their* company, explains them in plain language, reminds them before deadlines, and answers questions with sources from official pages.
+Regelvakt shows small Norwegian businesses which official obligations apply to _their_ company, explains them in plain language, reminds them before deadlines, and answers questions with sources from official pages.
 
 > Status: early development (pilot). Not tax or accounting advice.
 
 ## The problem
 
-Small businesses struggle less with *doing* their obligations than with *understanding* which ones apply to them.
+Small businesses struggle less with _doing_ their obligations than with _understanding_ which ones apply to them.
 
 In Fiken's survey of small businesses (0–5 employees), the two hardest parts of running a business were:
 
@@ -25,15 +25,15 @@ Source: [Fiken – Forenkling for næringslivet](https://www.regjeringen.no/cont
 
 ### What it is not
 
-Not an accounting system and not an accountant. Regelvakt does not file anything or keep books. It answers one question: *what applies to me, when, and what does it mean?*
+Not an accounting system and not an accountant. Regelvakt does not file anything or keep books. It answers one question: _what applies to me, when, and what does it mean?_
 
 ## Rule engine (overview)
 
-| Input | Source |
-| --- | --- |
-| Organisation form (ENK / AS), VAT registration, employees, industry code | Brønnøysundregistrene API |
-| Expected sales, payroll, expected profit, VAT term | Short questions to the user |
-| Obligations and deadlines | Rule table maintained in this project, verified against Skatteetaten |
+| Input                                                                    | Source                                                               |
+| ------------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| Organisation form (ENK / AS), VAT registration, employees, industry code | Brønnøysundregistrene API                                            |
+| Expected sales, payroll, expected profit, VAT term                       | Short questions to the user                                          |
+| Obligations and deadlines                                                | Rule table maintained in this project, verified against Skatteetaten |
 
 ## Tech stack
 
@@ -50,42 +50,113 @@ Shares its foundation (Brønnøysund integration, AI assistant, email) with [Lev
 ```
 regelvakt/
   backend/   Express + TypeScript API
+    src/
+      config/        database, migrator, environment
+      controllers/   request handlers
+      mappers/       Brreg data to the app's own shapes
+      migrations/    database migrations (Umzug)
+      routes/        API routes
+      services/      external services (Brreg)
+      types/         shared types
+      utils/         small helpers
+    tests/           Vitest + Supertest
   web/       Next.js frontend (planned)
 ```
+
+## Getting started (backend)
+
+Requirements: Node.js 24 and a local PostgreSQL database.
+
+Create `backend/.env` with these variables (see `backend/env_example`):
+
+```
+PORT=3000
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=regelvakt
+DB_USER=postgres
+DB_PASSWORD=
+```
+
+Then, in `backend/`:
+
+```
+npm install
+npm run dev                  # compile, watch and run (applies pending migrations)
+npm test                     # type check and run the tests
+npm run migrate -- pending   # list pending migrations (also: up, down, executed)
+```
+
+## API
+
+| Endpoint                        | Description                                                                                                                              |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api`                      | API root                                                                                                                                 |
+| `GET /api/companies/:orgNumber` | Company data from Brønnøysundregistrene in the app's own shape. 400 invalid number, 404 not found, 410 struck off, 502 Brreg unavailable |
 
 ## Roadmap
 
 ### Phase 0 – Planning
+
 - [x] Problem and demand research
 - [x] Project plan and scope for the first version
 
 ### Phase 1 – Backend foundation
-- [ ] Project setup (TypeScript, Express, linting, tests)
-- [ ] Database setup and migrations
-- [ ] Brønnøysund client
+
+- [x] Project setup: TypeScript, Express, `npm run dev` with watch mode
+- [x] Tests: Vitest + Supertest, run in GitHub Actions CI
+- [x] PostgreSQL with sequelize-typescript, migrations with Umzug
+- [x] Brønnøysund client and `GET /api/companies/:orgNumber` (incl. organization number check digit validation)
+- [ ] Linting and formatting (ESLint, Prettier)
 
 ### Phase 2 – Rule engine
-- [ ] Data model for obligations, rules and deadlines
-- [ ] Rule table for ENK and AS
-- [ ] Onboarding questions and answers
-- [ ] Deadline calculation (incl. weekends and holidays)
-- [ ] API: obligations for a company
+
+- [x] Data model design (see below)
+- [ ] Types, business day and Norwegian public holiday calculation
+- [ ] Questions and obligation definitions for ENK and AS (deadlines verified against Skatteetaten)
+- [ ] Engine: company + answers → obligations, reasons, deadlines and warnings
+- [ ] `assessments` table (migration and model)
+- [ ] API: `POST /api/assessments` and `GET /api/assessments/:id`
+
+**Rule engine design**
+
+- Rules live in code (versioned, unit tested); results are not stored but recalculated from the rules.
+- The engine is a pure function: company + answers + today's date → result. No database or network access.
+- _Facts_ combine Brreg data (organization form, VAT registration, employees as a hint) with answers (VAT term, expected sales, payroll, expected profit).
+- Each _question_ carries the condition for when it is asked; each _obligation_ carries `appliesTo`, a human readable `reason`, a deadline schedule and links to its official source and Altinn.
+- Deadline schedules: `annual`, `periodic` and `monthly`; deadlines on weekends and public holidays move to the next business day.
+- Supported organization forms are listed in the rules (first version: ENK and AS); other forms get a clear "not supported yet" result.
+- `assessments` stores the organization number, a company snapshot, the answers and the rules version.
 
 ### Phase 3 – Assistant
+
 - [ ] Collect official pages into a knowledge base with source links
 - [ ] Question answering with citations
 
 ### Phase 4 – Reminders
+
 - [ ] Email reminders before deadlines
 
 ### Phase 5 – Frontend and deployment
+
 - [ ] Next.js frontend (Norwegian and English)
 - [ ] Docker and deployment
 
 ### Later
+
 - [ ] Step-by-step help with the tax return
 - [ ] Explaining official letters
 - [ ] More languages
+
+## Progress log
+
+### 2026-11-18
+
+- Project plan, demand research and README
+- Backend foundation: TypeScript, Express, watch mode, Vitest + Supertest, CI
+- PostgreSQL connection and Umzug migrations (layout aligned with Leverandørvakt)
+- Brønnøysund lookup endpoint with tests
+- Rule engine data model designed
 
 ## Disclaimer
 

@@ -1,6 +1,15 @@
+# Development settings: copy to backend/.env
 PORT=3000
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=regelvakt
+DB_USER=postgres
+DB_PASSWORD=
+
+# Test settings: copy to backend/.env.test
+# The test database name must end with _test; tests empty its tables.
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=regelvakt_test
 DB_USER=postgres
 DB_PASSWORD=
