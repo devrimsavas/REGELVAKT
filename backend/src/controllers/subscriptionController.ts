@@ -142,7 +142,7 @@ export const updateSubscription = async (req: Request, res: Response) => {
   // #swagger.summary = "Change the language or the reminder days"
   /* #swagger.requestBody = {
        required: true,
-       content: { "application/json": { example: { token: "…", reminderDays: [7, 1] } } }
+       content: { "application/json": { example: { token: "manageToken", reminderDays: [7, 1] } } }
      } */
   const parsed = parseSettings(req.body);
   if (!parsed.ok) {

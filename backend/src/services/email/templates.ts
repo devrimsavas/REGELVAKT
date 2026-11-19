@@ -348,3 +348,50 @@ export function remindersStoppedEmail(input: {
     footer: [DISCLAIMER[input.language]],
   });
 }
+
+// ---- Answers need updating ----
+
+const OUTDATED = {
+  nb: {
+    subject: (c: CompanyLine) =>
+      `Opplysningene om ${c.companyName} har endret seg`,
+    intro: (c: CompanyLine) =>
+      `Enhetsregisteret viser nye opplysninger om ${c.companyName} (${c.orgNumber}), for eksempel en ny registrering i Merverdiavgiftsregisteret. Noen frister avhenger av svarene dine, så du må svare på spørsmålene på nytt.`,
+    action:
+      "Til du har gjort det, kan noen frister mangle i påminnelsene. Det tar under ett minutt:",
+    button: "Svar på spørsmålene",
+    manage: "Endre eller stopp påminnelsene",
+  },
+  en: {
+    subject: (c: CompanyLine) =>
+      `The information about ${c.companyName} has changed`,
+    intro: (c: CompanyLine) =>
+      `The Central Coordinating Register shows new information about ${c.companyName} (${c.orgNumber}), such as a new VAT registration. Some deadlines depend on your answers, so you need to answer the questions again.`,
+    action:
+      "Until you do, some deadlines may be missing from the reminders. It takes less than a minute:",
+    button: "Answer the questions",
+    manage: "Change or stop the reminders",
+  },
+} as const;
+
+export function answersOutdatedEmail(input: {
+  to: string;
+  language: EmailLanguage;
+  company: CompanyLine;
+  assessmentUrl: string;
+  manageUrl: string;
+  oneClickUnsubscribeUrl: string;
+}): Email {
+  const t = OUTDATED[input.language];
+  return email(
+    input.to,
+    t.subject(input.company),
+    {
+      paragraphs: [t.intro(input.company), t.action],
+      button: { text: t.button, url: input.assessmentUrl },
+      footer: [DISCLAIMER[input.language]],
+      footerLinks: [{ text: t.manage, url: input.manageUrl }],
+    },
+    unsubscribeHeaders(input.oneClickUnsubscribeUrl),
+  );
+}

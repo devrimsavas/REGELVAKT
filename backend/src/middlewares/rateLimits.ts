@@ -18,6 +18,10 @@ import { normalizeEmail } from "../services/subscriptionService.js";
 
 const MINUTE = 60 * 1000;
 
+function isCalendar(req: Request): boolean {
+  return req.path.endsWith("/calendar.ics");
+}
+
 function envLimit(name: string, fallback: number): () => number {
   return () => {
     const value = Number(process.env[name]);
@@ -52,6 +56,8 @@ export const apiLimit = rateLimit({
   ...common,
   limit: envLimit("REQUESTS_PER_ADDRESS", 1000),
   identifier: "api",
+  // Calendars have their own limit (calendarLimit)
+  skip: (req) => isCalendar(req),
   handler: tooMany("Too many requests. Try again later."),
 });
 
@@ -88,4 +94,15 @@ export const subscribePerEmailLimit = rateLimit({
   handler: tooMany(
     "Too many reminder requests for this address. Try again later.",
   ),
+});
+
+// Calendar feeds. Google and Microsoft fetch the calendars of all their
+// users from a few shared addresses, so one address may fetch many
+// calendars; the limit is higher than apiLimit, and a calendar is a
+// cheap read from the database.
+export const calendarLimit = rateLimit({
+  ...common,
+  limit: envLimit("CALENDAR_REQUESTS_PER_ADDRESS", 5000),
+  identifier: "calendar",
+  handler: tooMany("Too many calendar requests. Try again later."),
 });

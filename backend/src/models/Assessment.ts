@@ -34,6 +34,15 @@ export class Assessment extends Model {
   })
   declare companyRefreshedAt: Date;
 
+  // When the assessment was last read, changed or fetched as a calendar;
+  // updated at most once a day (see services/assessmentService.ts)
+  @Column({
+    type: DataType.DATE,
+    allowNull: false,
+    defaultValue: DataType.NOW,
+  })
+  declare lastAccessedAt: Date;
+
   @HasMany(() => Subscription)
   declare subscriptions?: Subscription[];
 

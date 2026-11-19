@@ -11,9 +11,11 @@ import { fromIsoDate } from "../rules/calendar.js";
 import { assess } from "../rules/engine.js";
 import { todayInNorway } from "../utils/today.js";
 import { webAppUrl } from "../utils/webAppUrl.js";
+import { answersNeedUpdate } from "./assessmentService.js";
 import { lookupCompany } from "./brregService.js";
-import { getEmailSender } from "./email/emailSender.js";
+import { type Email, getEmailSender } from "./email/emailSender.js";
 import {
+  answersOutdatedEmail,
   type ReminderLine,
   reminderEmail,
   remindersStoppedEmail,
@@ -26,9 +28,10 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 // How old a company snapshot may be before the job fetches it again
 export const REFRESH_AFTER_DAYS = 7;
-// Assessments without any subscription are deleted after this many days:
-// the snapshot of a sole proprietorship holds the owner's name
-export const KEEP_UNSUBSCRIBED_ASSESSMENT_DAYS = 30;
+// Assessments without any subscription are deleted when they have not been
+// used for this many days: the snapshot of a sole proprietorship holds the
+// owner's name. Reading the page or fetching the calendar counts as use.
+export const KEEP_UNUSED_ASSESSMENT_DAYS = 30;
 // The record of sent reminders is kept this long
 export const KEEP_DELIVERIES_DAYS = 365;
 
@@ -63,20 +66,29 @@ function assessmentsWithActiveSubscriptions(where = {}) {
 
 export interface RefreshSummary {
   refreshed: number;
+  answersOutdated: number;
   stopped: number;
   failed: number;
 }
 
 // Fetches the company again from Brreg for assessments with reminders whose
 // snapshot is older than REFRESH_AFTER_DAYS, so changes in the register
-// (such as a new VAT registration) reach the reminders. A company that is
+// (such as a new VAT registration) reach the reminders. When the new data
+// makes the answers no longer fit (a newly VAT-registered company has not
+// told its VAT term), the subscribers are asked by email to answer again,
+// once: the reminders go on meanwhile. A company that is
 // no longer in the register gets no more reminders: its subscribers are
 // told and their subscriptions deleted. When Brreg cannot be reached, the
 // snapshot is kept and tried again on the next run.
 export async function refreshCompanies(
   now = new Date(),
 ): Promise<RefreshSummary> {
-  const summary: RefreshSummary = { refreshed: 0, stopped: 0, failed: 0 };
+  const summary: RefreshSummary = {
+    refreshed: 0,
+    answersOutdated: 0,
+    stopped: 0,
+    failed: 0,
+  };
   const assessments = await assessmentsWithActiveSubscriptions({
     companyRefreshedAt: { [Op.lt]: daysAgo(now, REFRESH_AFTER_DAYS) },
   });
@@ -95,38 +107,66 @@ export async function refreshCompanies(
     }
 
     if (lookup.status === "active") {
+      const answersFitBefore = !answersNeedUpdate(assessment);
       await assessment.update({
         companySnapshot: lookup.company,
         companyRefreshedAt: now,
       });
       summary.refreshed++;
-      continue;
-    }
 
-    // Struck off or gone from the register
-    for (const subscription of assessment.subscriptions ?? []) {
-      try {
-        await getEmailSender().send(
-          remindersStoppedEmail({
+      if (answersFitBefore && answersNeedUpdate(assessment)) {
+        summary.answersOutdated++;
+        await tellSubscribers(assessment, (subscription) =>
+          answersOutdatedEmail({
             to: subscription.email,
             language: subscription.language,
             company: companyLine(assessment),
-            startUrl: webAppUrl(),
+            assessmentUrl: assessmentUrl(assessment),
+            manageUrl: manageUrl(subscription.id),
+            oneClickUnsubscribeUrl: oneClickUnsubscribeUrl(subscription.id),
           }),
         );
-      } catch (error: unknown) {
-        // The reminders stop either way
-        log.error(
-          { err: error, subscriptionId: subscription.id },
-          "Could not send the reminders stopped email",
-        );
       }
+      continue;
     }
+
+    // Struck off or gone from the register. The reminders stop even if
+    // an email cannot be sent.
+    await tellSubscribers(assessment, (subscription) =>
+      remindersStoppedEmail({
+        to: subscription.email,
+        language: subscription.language,
+        company: companyLine(assessment),
+        startUrl: webAppUrl(),
+      }),
+    );
     await Subscription.destroy({ where: { assessmentId: assessment.id } });
     summary.stopped++;
   }
 
   return summary;
+}
+
+// Sends each active subscriber of the assessment an email; one that fails
+// is logged and does not stop the others
+async function tellSubscribers(
+  assessment: Assessment,
+  build: (subscription: Subscription) => Email,
+): Promise<void> {
+  for (const subscription of assessment.subscriptions ?? []) {
+    try {
+      await getEmailSender().send(build(subscription));
+    } catch (error: unknown) {
+      log.error(
+        { err: error, subscriptionId: subscription.id },
+        "Could not send an email to a subscriber",
+      );
+    }
+  }
+}
+
+function assessmentUrl(assessment: Assessment): string {
+  return `${webAppUrl()}/assessments/${assessment.id}`;
 }
 
 // ---- 2. Send reminders ----
@@ -225,7 +265,7 @@ export async function sendDueReminders(now = new Date()): Promise<SendSummary> {
             language: subscription.language,
             company: companyLine(assessment),
             lines: due.map((reminder) => reminder.line),
-            assessmentUrl: `${webAppUrl()}/assessments/${assessment.id}`,
+            assessmentUrl: assessmentUrl(assessment),
             manageUrl: manageUrl(subscription.id),
             oneClickUnsubscribeUrl: oneClickUnsubscribeUrl(subscription.id),
           }),
@@ -270,8 +310,8 @@ export interface CleanupSummary {
 // Deletes what is no longer needed:
 // - subscriptions never confirmed, once the confirmation link has run out
 //   (CONFIRM_LINK_HOURS)
-// - assessments without any subscription, KEEP_UNSUBSCRIBED_ASSESSMENT_DAYS
-//   after they were made
+// - assessments without any subscription that have not been used for
+//   KEEP_UNUSED_ASSESSMENT_DAYS
 // - records of reminders sent more than KEEP_DELIVERIES_DAYS ago
 export async function cleanUp(now = new Date()): Promise<CleanupSummary> {
   const unconfirmedSubscriptions = await Subscription.destroy({
@@ -280,8 +320,8 @@ export async function cleanUp(now = new Date()): Promise<CleanupSummary> {
 
   const assessments = await Assessment.destroy({
     where: {
-      createdAt: {
-        [Op.lt]: daysAgo(now, KEEP_UNSUBSCRIBED_ASSESSMENT_DAYS),
+      lastAccessedAt: {
+        [Op.lt]: daysAgo(now, KEEP_UNUSED_ASSESSMENT_DAYS),
       },
       id: {
         [Op.notIn]: literal("(SELECT assessment_id FROM subscriptions)"),

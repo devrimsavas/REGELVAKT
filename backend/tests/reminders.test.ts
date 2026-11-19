@@ -279,17 +279,59 @@ describe("refreshing company data", () => {
     await subscribe();
     const fetchMock = mockBrreg(200, {
       ...enkEnhet,
-      registrertIMvaregisteret: false,
+      naeringskode1: { kode: "96.022", beskrivelse: "Skjønnhetspleie" },
     });
     const now = inEightDays();
 
     const summary = await refreshCompanies(now);
 
-    expect(summary).toEqual({ refreshed: 1, stopped: 0, failed: 0 });
+    expect(summary).toEqual({
+      refreshed: 1,
+      answersOutdated: 0,
+      stopped: 0,
+      failed: 0,
+    });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     await assessment.reload();
-    expect(assessment.companySnapshot.vatRegistered).toBe(false);
+    expect(assessment.companySnapshot.industryCode).toBe("96.022");
     expect(assessment.companyRefreshedAt.getTime()).toBe(now.getTime());
+    // The answers still fit, so nobody is asked anything
+    expect(emails).toHaveLength(0);
+  });
+
+  it("asks the subscribers to answer again when the new data needs it", async () => {
+    // Not VAT-registered when the assessment was made
+    const notVat = { ...enkEnhet, registrertIMvaregisteret: false };
+    const before = await createAssessment({
+      enhet: notVat,
+      answers: {
+        expectsSalesOver50k: true,
+        paysSalary: false,
+        expectsProfit: true,
+      },
+    });
+    await subscribe({}, before);
+    // Now registered: the VAT term is a new question
+    mockBrreg(200, enkEnhet);
+
+    const summary = await refreshCompanies(inEightDays());
+
+    expect(summary.answersOutdated).toBe(1);
+    expect(emails).toHaveLength(1);
+    expect(emails[0]?.subject).toBe(
+      "Opplysningene om AYSE FRISØR har endret seg",
+    );
+    expect(emails[0]?.text).toContain(
+      `Svar på spørsmålene: http://web.test/assessments/${before.id}`,
+    );
+    // The subscription goes on
+    expect(
+      await Subscription.count({ where: { assessmentId: before.id } }),
+    ).toBe(1);
+
+    // Asked once: the next refresh finds the answers already out of date
+    await refreshCompanies(new Date(Date.now() + 16 * DAY_MS));
+    expect(emails).toHaveLength(1);
   });
 
   it("leaves recent snapshots and assessments without reminders alone", async () => {
@@ -309,7 +351,12 @@ describe("refreshing company data", () => {
 
     const summary = await refreshCompanies(inEightDays());
 
-    expect(summary).toEqual({ refreshed: 0, stopped: 1, failed: 0 });
+    expect(summary).toEqual({
+      refreshed: 0,
+      answersOutdated: 0,
+      stopped: 1,
+      failed: 0,
+    });
     expect(await Subscription.count()).toBe(0);
     expect(emails).toHaveLength(1);
     expect(emails[0]?.subject).toBe("Påminnelsene for AYSE FRISØR er stoppet");
@@ -324,7 +371,12 @@ describe("refreshing company data", () => {
 
     const summary = await refreshCompanies(inEightDays());
 
-    expect(summary).toEqual({ refreshed: 0, stopped: 0, failed: 1 });
+    expect(summary).toEqual({
+      refreshed: 0,
+      answersOutdated: 0,
+      stopped: 0,
+      failed: 1,
+    });
     await assessment.reload();
     expect(assessment.companyRefreshedAt.getTime()).toBe(before);
     expect(await Subscription.count()).toBe(1);

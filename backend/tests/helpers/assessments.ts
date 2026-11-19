@@ -1,5 +1,6 @@
 import { toCompany } from "../../src/mappers/companyMapper.js";
 import { Assessment } from "../../src/models/Assessment.js";
+import type { Answers } from "../../src/rules/types.js";
 import { RULES_VERSION } from "../../src/rules/version.js";
 import type { BrregEnhet } from "../../src/types/brreg.js";
 
@@ -28,12 +29,22 @@ export const enkEnhet: BrregEnhet = {
   underTvangsavviklingEllerTvangsopplosning: false,
 };
 
-// A stored assessment for the company above, made without calling Brreg
-export function createAssessment(): Promise<Assessment> {
+export const enkAnswers: Answers = {
+  vatTerm: "bimonthly",
+  paysSalary: false,
+  expectsProfit: true,
+};
+
+// A stored assessment for the company above, made without calling Brreg.
+// Another company or other answers can be given.
+export function createAssessment(
+  options: { enhet?: BrregEnhet; answers?: Answers } = {},
+): Promise<Assessment> {
+  const enhet = options.enhet ?? enkEnhet;
   return Assessment.create({
-    orgNumber: ORG_NUMBER,
-    companySnapshot: toCompany(enkEnhet),
-    answers: { vatTerm: "bimonthly", paysSalary: false, expectsProfit: true },
+    orgNumber: enhet.organisasjonsnummer,
+    companySnapshot: toCompany(enhet),
+    answers: options.answers ?? enkAnswers,
     rulesVersion: RULES_VERSION,
   });
 }

@@ -39,6 +39,9 @@ BRREG_REQUESTS_PER_ADDRESS=100
 # email address from any client (stops filling someone's inbox)
 SUBSCRIPTIONS_PER_ADDRESS=20
 SUBSCRIPTIONS_PER_EMAIL=5
+# Calendar feeds, per client address. Higher than the others: calendar apps
+# such as Google Calendar fetch many users' calendars from shared addresses.
+CALENDAR_REQUESTS_PER_ADDRESS=5000
 
 # Proxies whose X-Forwarded-For header is trusted for the client's address.
 # The default trusts this machine and private networks (the web app, Docker).
