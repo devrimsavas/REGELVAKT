@@ -1,12 +1,14 @@
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import express from "express";
+import helmet from "helmet";
 import swaggerUi from "swagger-ui-express";
 import { errorHandler } from "./middlewares/errorHandler.js";
 import indexRouter from "./routes/index.js";
 
 const app = express();
 
+app.use(helmet());
 app.use(express.json());
 app.use("/api", indexRouter);
 
