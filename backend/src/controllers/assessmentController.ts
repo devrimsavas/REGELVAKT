@@ -1,11 +1,11 @@
 import type { Request, Response } from "express";
 import { Assessment } from "../models/Assessment.js";
+import { parseAnswers } from "../rules/answers.js";
+import { assess, toCompanyFacts } from "../rules/engine.js";
+import { RULES_VERSION } from "../rules/version.js";
 import { lookupCompany } from "../services/brregService.js";
 import { isValidOrgNumber } from "../utils/orgNumber.js";
 import { todayInNorway } from "../utils/today.js";
-import { assess, toCompanyFacts } from "../rules/engine.js";
-import { parseAnswers } from "../rules/answers.js";
-import { RULES_VERSION } from "../rules/version.js";
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -19,7 +19,11 @@ function toResponse(assessment: Assessment) {
     rulesVersionAtCreation: assessment.rulesVersion,
     company: assessment.companySnapshot,
     answers: assessment.answers,
-    result: assess(assessment.companySnapshot, assessment.answers, todayInNorway()),
+    result: assess(
+      assessment.companySnapshot,
+      assessment.answers,
+      todayInNorway(),
+    ),
   };
 }
 
@@ -54,7 +58,7 @@ export const createAssessment = async (req: Request, res: Response) => {
     return;
   }
 
-  let lookup;
+  let lookup: Awaited<ReturnType<typeof lookupCompany>>;
   try {
     lookup = await lookupCompany(orgNumber);
   } catch (error: unknown) {

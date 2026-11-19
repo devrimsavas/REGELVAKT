@@ -14,7 +14,10 @@ export function questionsFor(company: CompanyFacts): QuestionDefinition[] {
 
 // Every asked question must be answered with a valid value.
 // Answers to questions that are not asked, or unknown keys, are errors.
-export function parseAnswers(input: unknown, company: CompanyFacts): AnswersResult {
+export function parseAnswers(
+  input: unknown,
+  company: CompanyFacts,
+): AnswersResult {
   if (typeof input !== "object" || input === null || Array.isArray(input)) {
     return { ok: false, errors: ["Answers must be an object"] };
   }

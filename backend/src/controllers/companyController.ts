@@ -1,9 +1,9 @@
 import type { Request, Response } from "express";
+import { questionsFor } from "../rules/answers.js";
+import { toCompanyFacts } from "../rules/engine.js";
+import { toQuestionView } from "../rules/views.js";
 import { lookupCompany } from "../services/brregService.js";
 import { isValidOrgNumber } from "../utils/orgNumber.js";
-import { toCompanyFacts } from "../rules/engine.js";
-import { questionsFor } from "../rules/answers.js";
-import { toQuestionView } from "../rules/views.js";
 
 // GET /api/companies/:orgNumber
 export const getCompanyByOrgNumber = async (
@@ -62,7 +62,9 @@ export const getQuestionsByOrgNumber = async (
     const result = await lookupCompany(orgNumber);
 
     if (result.status === "deleted") {
-      res.status(410).json({ error: "Company has been struck off the register" });
+      res
+        .status(410)
+        .json({ error: "Company has been struck off the register" });
       return;
     }
     if (result.status === "notFound") {

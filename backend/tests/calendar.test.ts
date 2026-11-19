@@ -8,7 +8,8 @@ import {
   toIsoDate,
 } from "../src/rules/calendar.js";
 
-const businessDay = (value: string) => toIsoDate(toBusinessDay(fromIsoDate(value)));
+const businessDay = (value: string) =>
+  toIsoDate(toBusinessDay(fromIsoDate(value)));
 
 describe("easterSunday", () => {
   it.each([

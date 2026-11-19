@@ -1,7 +1,8 @@
 // Generates swagger_output.json from the routes and the #swagger comments
 // in the controllers. Run with `npm run swagger` after building.
-import swaggerAutogen from "swagger-autogen";
+
 import path from "node:path";
+import swaggerAutogen from "swagger-autogen";
 
 const doc = {
   info: {
@@ -12,8 +13,14 @@ const doc = {
   },
   servers: [{ url: "/" }],
   tags: [
-    { name: "Companies", description: "Company lookup and the questions for an assessment" },
-    { name: "Assessments", description: "Obligations, deadlines and warnings for a company" },
+    {
+      name: "Companies",
+      description: "Company lookup and the questions for an assessment",
+    },
+    {
+      name: "Assessments",
+      description: "Obligations, deadlines and warnings for a company",
+    },
     { name: "General", description: "API status" },
   ],
 };

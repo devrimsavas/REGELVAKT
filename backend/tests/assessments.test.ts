@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import request from "supertest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import app from "../src/app.js";
 import { Assessment } from "../src/models/Assessment.js";
 import type { BrregEnhet } from "../src/types/brreg.js";
@@ -19,7 +19,11 @@ const enkEnhet: BrregEnhet = {
   underTvangsavviklingEllerTvangsopplosning: false,
 };
 
-const ayseAnswers = { vatTerm: "bimonthly", paysSalary: false, expectsProfit: true };
+const ayseAnswers = {
+  vatTerm: "bimonthly",
+  paysSalary: false,
+  expectsProfit: true,
+};
 
 // Replaces fetch so the tests never call the real Brreg API
 function mockBrreg(status: number, body?: unknown) {
@@ -46,7 +50,9 @@ describe("GET /api/companies/:orgNumber/questions", () => {
   it("returns the questions for this company, without server-side logic", async () => {
     mockBrreg(200, enkEnhet);
 
-    const res = await request(app).get(`/api/companies/${ORG_NUMBER}/questions`);
+    const res = await request(app).get(
+      `/api/companies/${ORG_NUMBER}/questions`,
+    );
 
     expect(res.status).toBe(200);
     expect(res.body.supported).toBe(true);
@@ -65,7 +71,9 @@ describe("GET /api/companies/:orgNumber/questions", () => {
       organisasjonsform: { kode: "ORGL", beskrivelse: "Organisasjonsledd" },
     });
 
-    const res = await request(app).get(`/api/companies/${ORG_NUMBER}/questions`);
+    const res = await request(app).get(
+      `/api/companies/${ORG_NUMBER}/questions`,
+    );
 
     expect(res.body).toEqual({
       supported: false,
@@ -89,7 +97,10 @@ describe("POST /api/assessments", () => {
     expect(res.body.result.supported).toBe(true);
     expect(
       res.body.result.obligations.map(
-        (o: { id: string; nextDeadline: string | null }) => [o.id, o.nextDeadline],
+        (o: { id: string; nextDeadline: string | null }) => [
+          o.id,
+          o.nextDeadline,
+        ],
       ),
     ).toEqual([
       ["vat-return", "2026-12-10"],

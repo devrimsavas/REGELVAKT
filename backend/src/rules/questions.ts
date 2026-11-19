@@ -21,7 +21,10 @@ export const QUESTIONS: QuestionDefinition[] = [
       },
       {
         value: "annual",
-        label: { nb: "Én gang i året (årstermin)", en: "Once a year (annual term)" },
+        label: {
+          nb: "Én gang i året (årstermin)",
+          en: "Once a year (annual term)",
+        },
       },
       { value: "unknown", label: { nb: "Vet ikke", en: "I don't know" } },
     ],

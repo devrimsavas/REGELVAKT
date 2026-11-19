@@ -209,7 +209,10 @@ export const OBLIGATIONS: ObligationDefinition[] = [
   },
   {
     id: "shareholder-register",
-    title: { nb: "Aksjonærregisteroppgaven", en: "Shareholder register statement" },
+    title: {
+      nb: "Aksjonærregisteroppgaven",
+      en: "Shareholder register statement",
+    },
     description: {
       nb: "Oppgaven viser hvem som eier aksjene per 31. desember, og endringer, utbytte og kapitalendringer i løpet av året.",
       en: "The statement shows who owned the shares on 31 December, and changes, dividends and capital changes during the year.",

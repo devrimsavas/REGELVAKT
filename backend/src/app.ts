@@ -1,9 +1,9 @@
-import express from "express";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
+import express from "express";
 import swaggerUi from "swagger-ui-express";
-import indexRouter from "./routes/index.js";
 import { errorHandler } from "./middlewares/errorHandler.js";
+import indexRouter from "./routes/index.js";
 
 const app = express();
 
@@ -14,7 +14,9 @@ app.use("/api", indexRouter);
 const swaggerPath = path.join(process.cwd(), "swagger_output.json");
 
 if (existsSync(swaggerPath)) {
-  const swaggerDocument: unknown = JSON.parse(readFileSync(swaggerPath, "utf-8"));
+  const swaggerDocument: unknown = JSON.parse(
+    readFileSync(swaggerPath, "utf-8"),
+  );
   app.use(
     "/api/docs",
     swaggerUi.serve,

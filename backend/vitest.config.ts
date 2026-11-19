@@ -1,5 +1,5 @@
-import { defineConfig } from "vitest/config";
 import { config } from "dotenv";
+import { defineConfig } from "vitest/config";
 
 // Tests use their own database and settings from .env.test,
 // never the development database in .env. In CI they come from the workflow.

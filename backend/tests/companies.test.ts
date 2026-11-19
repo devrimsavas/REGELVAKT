@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
 import request from "supertest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import app from "../src/app.js";
 import { toCompany } from "../src/mappers/companyMapper.js";
 import type { BrregEnhet } from "../src/types/brreg.js";
@@ -140,7 +140,9 @@ describe("GET /api/companies/:orgNumber", () => {
   });
 
   it("returns 502 when Brreg cannot be reached", async () => {
-    vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("fetch failed"));
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(
+      new TypeError("fetch failed"),
+    );
     vi.spyOn(console, "error").mockImplementation(() => {});
 
     const res = await request(app).get(`/api/companies/${ORG_NUMBER}`);

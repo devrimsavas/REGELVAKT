@@ -63,8 +63,19 @@ describe("questions", () => {
 describe("which obligations apply", () => {
   it("ENK with VAT, profit and no employees", () => {
     expect(
-      appliesIds(facts(enk, { vatTerm: "bimonthly", paysSalary: false, expectsProfit: true })),
-    ).toEqual(["tax-return-enk", "advance-tax-enk", "vat-return", "bookkeeping"]);
+      appliesIds(
+        facts(enk, {
+          vatTerm: "bimonthly",
+          paysSalary: false,
+          expectsProfit: true,
+        }),
+      ),
+    ).toEqual([
+      "tax-return-enk",
+      "advance-tax-enk",
+      "vat-return",
+      "bookkeeping",
+    ]);
   });
 
   it("ENK without profit pays no advance tax", () => {
@@ -116,7 +127,9 @@ describe("2026 deadlines", () => {
   });
 
   it("no VAT deadlines while the term is unknown", () => {
-    expect(obligation("vat-return").schedule(facts(enk, { vatTerm: "unknown" }))).toBeNull();
+    expect(
+      obligation("vat-return").schedule(facts(enk, { vatTerm: "unknown" })),
+    ).toBeNull();
   });
 
   it("tax return moves from Sunday 31 May to 1 June", () => {
@@ -156,7 +169,9 @@ describe("2026 deadlines", () => {
   });
 
   it("employer's contribution every other month", () => {
-    expect(in2026("employer-contribution", facts(as, { paysSalary: true }))).toEqual([
+    expect(
+      in2026("employer-contribution", facts(as, { paysSalary: true })),
+    ).toEqual([
       "2026-01-15",
       "2026-03-16",
       "2026-05-15",

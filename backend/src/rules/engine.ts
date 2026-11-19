@@ -4,11 +4,11 @@ import type { Company } from "../types/company.js";
 import { OBLIGATIONS } from "./obligations.js";
 import { upcomingDeadlines } from "./schedule.js";
 import {
-  isSupportedOrganizationForm,
   type Answers,
   type AssessmentResult,
   type CompanyFacts,
   type Facts,
+  isSupportedOrganizationForm,
   type ObligationResult,
 } from "./types.js";
 import { RULES_VERSION } from "./version.js";
@@ -81,13 +81,18 @@ export function assess(
   // Array.prototype.sort is stable, so equal deadlines keep the rules' order
   obligations.sort(byNextDeadline);
 
-  const warnings = WARNINGS.filter((definition) => definition.appliesTo(facts)).map(
-    (definition) => ({
-      id: definition.id,
-      message: definition.message,
-      sourceUrl: definition.sourceUrl,
-    }),
-  );
+  const warnings = WARNINGS.filter((definition) =>
+    definition.appliesTo(facts),
+  ).map((definition) => ({
+    id: definition.id,
+    message: definition.message,
+    sourceUrl: definition.sourceUrl,
+  }));
 
-  return { supported: true, rulesVersion: RULES_VERSION, obligations, warnings };
+  return {
+    supported: true,
+    rulesVersion: RULES_VERSION,
+    obligations,
+    warnings,
+  };
 }

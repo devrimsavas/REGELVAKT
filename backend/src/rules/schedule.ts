@@ -3,7 +3,7 @@ import { makeDate, toBusinessDay, toIsoDate } from "./calendar.js";
 import type { DeadlineSchedule, IsoDate, MonthDay } from "./types.js";
 
 // The nominal (unadjusted) dates of a schedule within one calendar year
-function datesInYear(schedule: DeadlineSchedule, year: number): MonthDay[] {
+function datesInYear(schedule: DeadlineSchedule): MonthDay[] {
   switch (schedule.kind) {
     case "annual":
       return [schedule.date];
@@ -29,8 +29,12 @@ export function deadlinesBetween(
 
   // A deadline at the very end of a year can move into the next one,
   // so the year before `from` is included as well
-  for (let year = from.getUTCFullYear() - 1; year <= to.getUTCFullYear(); year++) {
-    for (const { month, day } of datesInYear(schedule, year)) {
+  for (
+    let year = from.getUTCFullYear() - 1;
+    year <= to.getUTCFullYear();
+    year++
+  ) {
+    for (const { month, day } of datesInYear(schedule)) {
       const deadline = toBusinessDay(makeDate(year, month, day));
       if (deadline >= from && deadline < to) {
         result.push(toIsoDate(deadline));

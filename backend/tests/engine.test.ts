@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { parseAnswers, questionsFor } from "../src/rules/answers.js";
 import { fromIsoDate } from "../src/rules/calendar.js";
 import { assess, toCompanyFacts } from "../src/rules/engine.js";
-import { parseAnswers, questionsFor } from "../src/rules/answers.js";
 import type { Company } from "../src/types/company.js";
 
 const TODAY = fromIsoDate("2026-11-18");
