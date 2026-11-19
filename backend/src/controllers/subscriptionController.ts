@@ -105,6 +105,10 @@ export const confirmSubscription = async (req: Request, res: Response) => {
   // #swagger.tags = ["Reminders"]
   // #swagger.summary = "Confirm a subscription with the token from the confirmation email"
   /* #swagger.description = "Answers with the subscription and its manageToken, for the web app's manage page." */
+  /* #swagger.requestBody = {
+       required: true,
+       content: { "application/json": { example: { token: "token from the link in the confirmation email" } } }
+     } */
   try {
     const subscription = await confirm(tokenOf(req.body));
     res.json({
@@ -120,6 +124,10 @@ export const confirmSubscription = async (req: Request, res: Response) => {
 export const lookupSubscription = async (req: Request, res: Response) => {
   // #swagger.tags = ["Reminders"]
   // #swagger.summary = "Read a subscription with the manage token from an email"
+  /* #swagger.requestBody = {
+       required: true,
+       content: { "application/json": { example: { token: "manageToken" } } }
+     } */
   try {
     const subscription = await findByManageToken(tokenOf(req.body));
     res.json(await view(subscription));
@@ -154,6 +162,10 @@ export const updateSubscription = async (req: Request, res: Response) => {
 export const unsubscribeSubscription = async (req: Request, res: Response) => {
   // #swagger.tags = ["Reminders"]
   // #swagger.summary = "Stop the reminders and delete the email address"
+  /* #swagger.requestBody = {
+       required: true,
+       content: { "application/json": { example: { token: "manageToken" } } }
+     } */
   try {
     await unsubscribe(tokenOf(req.body));
     res.json({ unsubscribed: true });

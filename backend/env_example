@@ -18,6 +18,10 @@ EMAIL_PROVIDER=log
 RESEND_API_KEY=
 EMAIL_FROM=Regelvakt <onboarding@resend.dev>
 WEB_APP_URL=http://localhost:3001
+# The reminder job runs once a day at this hour, Norwegian time (0-23), and
+# checks every REMINDER_CHECK_MINUTES whether it is time
+EMAIL_HOUR=7
+REMINDER_CHECK_MINUTES=15
 
 # Logging. LOG_FORMAT=pretty writes readable, coloured lines (needs the
 # pino-pretty dev dependency); leave it out on a server to get JSON lines.

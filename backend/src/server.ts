@@ -4,6 +4,7 @@ import app from "./app.js";
 import { sequelize } from "./config/database.js";
 import { logger } from "./config/logger.js";
 import { migrator } from "./config/migrator.js";
+import { startReminderJob } from "./jobs/reminderJob.js";
 import { subscriptionSecret } from "./utils/tokens.js";
 
 const PORT = process.env.PORT;
@@ -25,6 +26,9 @@ const server = async () => {
         process.exit(1);
       }
       logger.info(`Listening on port ${PORT}`);
+
+      // Background work
+      startReminderJob();
     });
   } catch (error: unknown) {
     logger.fatal({ err: error }, "Startup error");

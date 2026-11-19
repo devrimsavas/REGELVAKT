@@ -17,10 +17,25 @@ const DISCLAIMER: Record<EmailLanguage, string> = {
   en: "Regelvakt is a guide, not tax or accounting advice. Always check the source.",
 };
 
+interface Link {
+  text: string;
+  url: string;
+}
+
+// A boxed entry in a list, such as one deadline in a reminder
+interface Item {
+  title: string;
+  lines: string[];
+  links: Link[];
+}
+
 interface Layout {
   paragraphs: string[];
-  button: { text: string; url: string };
+  items?: Item[];
+  button: Link;
+  // Plain lines and links, in small print at the bottom
   footer: string[];
+  footerLinks?: Link[];
 }
 
 // A plain, single-column layout that mail programs show the same way
@@ -28,12 +43,40 @@ function html(layout: Layout): string {
   const paragraphs = layout.paragraphs
     .map((p) => `<p style="margin:0 0 16px">${escapeHtml(p)}</p>`)
     .join("");
-  const footer = layout.footer.map((line) => escapeHtml(line)).join("<br>");
+  const items = (layout.items ?? [])
+    .map((item) => {
+      const lines = item.lines
+        .map(
+          (line) =>
+            `<p style="margin:0 0 4px;color:#5d6066">${escapeHtml(line)}</p>`,
+        )
+        .join("");
+      const links = item.links
+        .map(
+          (link) =>
+            `<a href="${escapeHtml(link.url)}" style="color:#0062ba">${escapeHtml(link.text)}</a>`,
+        )
+        .join(" · ");
+      return `<div style="margin:0 0 12px;padding:12px 16px;border-left:4px solid #0062ba;background:#f4f5f6;border-radius:4px">
+<p style="margin:0 0 4px;font-weight:bold">${escapeHtml(item.title)}</p>
+${lines}<p style="margin:4px 0 0;font-size:13px">${links}</p>
+</div>`;
+    })
+    .join("");
+  const footerLinks = (layout.footerLinks ?? []).map(
+    (link) =>
+      `<a href="${escapeHtml(link.url)}" style="color:#5d6066">${escapeHtml(link.text)}</a>`,
+  );
+  const footer = [
+    ...layout.footer.map((line) => escapeHtml(line)),
+    ...(footerLinks.length > 0 ? [footerLinks.join(" · ")] : []),
+  ].join("<br>");
   return `<!DOCTYPE html>
 <html><body style="margin:0;padding:24px;background:#f4f5f6;font-family:Arial,Helvetica,sans-serif;color:#24272b;font-size:15px;line-height:1.5">
 <div style="max-width:560px;margin:0 auto;background:#ffffff;padding:32px;border-radius:8px">
 <p style="margin:0 0 24px;font-size:18px;font-weight:bold">Regelvakt</p>
 ${paragraphs}
+${items}
 <p style="margin:24px 0"><a href="${escapeHtml(layout.button.url)}" style="display:inline-block;padding:12px 20px;background:#0062ba;color:#ffffff;text-decoration:none;border-radius:4px;font-weight:bold">${escapeHtml(layout.button.text)}</a></p>
 <p style="margin:24px 0 0;font-size:12px;color:#5d6066">${footer}</p>
 </div></body></html>`;
@@ -42,9 +85,16 @@ ${paragraphs}
 function text(layout: Layout): string {
   return [
     ...layout.paragraphs.flatMap((p) => [p, ""]),
+    ...(layout.items ?? []).flatMap((item) => [
+      item.title,
+      ...item.lines.map((line) => `  ${line}`),
+      ...item.links.map((link) => `  ${link.text}: ${link.url}`),
+      "",
+    ]),
     `${layout.button.text}: ${layout.button.url}`,
     "",
     ...layout.footer,
+    ...(layout.footerLinks ?? []).map((link) => `${link.text}: ${link.url}`),
   ].join("\n");
 }
 
@@ -158,4 +208,143 @@ export function alreadySubscribedEmail(input: {
     },
     unsubscribeHeaders(input.oneClickUnsubscribeUrl),
   );
+}
+
+// ---- Reminders ----
+
+// A deadline in a reminder email
+export interface ReminderLine {
+  title: string;
+  deadline: string; // YYYY-MM-DD
+  daysLeft: number;
+  sourceUrl: string;
+  altinnUrl: string | null;
+}
+
+const LOCALES: Record<EmailLanguage, string> = { nb: "nb-NO", en: "en-GB" };
+
+// e.g. "torsdag 10. desember 2026" or "Thursday 10 December 2026". Built
+// from its parts, so the punctuation does not depend on the Node version.
+export function formatDate(isoDate: string, language: EmailLanguage): string {
+  const parts = new Intl.DateTimeFormat(LOCALES[language], {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).formatToParts(new Date(`${isoDate}T00:00:00Z`));
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? "";
+
+  const day = language === "nb" ? `${part("day")}.` : part("day");
+  return `${part("weekday")} ${day} ${part("month")} ${part("year")}`;
+}
+
+const REMINDER = {
+  nb: {
+    when: (days: number) =>
+      days === 0 ? "i dag" : days === 1 ? "i morgen" : `om ${days} dager`,
+    subjectOne: (line: ReminderLine, c: CompanyLine) =>
+      `Frist ${REMINDER.nb.when(line.daysLeft)}: ${line.title} (${c.companyName})`,
+    subjectMany: (count: number, c: CompanyLine) =>
+      `${count} frister nærmer seg for ${c.companyName}`,
+    intro: (c: CompanyLine) =>
+      `Dette er fristene som nærmer seg for ${c.companyName} (${c.orgNumber}):`,
+    due: (line: ReminderLine, language: EmailLanguage) =>
+      `Frist: ${formatDate(line.deadline, language)} (${REMINDER.nb.when(line.daysLeft)})`,
+    source: "Les mer",
+    altinn: "Åpne i Altinn",
+    button: "Se alle frister",
+    why: "Du får denne e-posten fordi du har bedt om påminnelser fra Regelvakt.",
+    manage: "Endre eller stopp påminnelsene",
+  },
+  en: {
+    when: (days: number) =>
+      days === 0 ? "today" : days === 1 ? "tomorrow" : `in ${days} days`,
+    subjectOne: (line: ReminderLine, c: CompanyLine) =>
+      `Deadline ${REMINDER.en.when(line.daysLeft)}: ${line.title} (${c.companyName})`,
+    subjectMany: (count: number, c: CompanyLine) =>
+      `${count} deadlines coming up for ${c.companyName}`,
+    intro: (c: CompanyLine) =>
+      `These deadlines are coming up for ${c.companyName} (${c.orgNumber}):`,
+    due: (line: ReminderLine, language: EmailLanguage) =>
+      `Deadline: ${formatDate(line.deadline, language)} (${REMINDER.en.when(line.daysLeft)})`,
+    source: "Read more",
+    altinn: "Open in Altinn",
+    button: "See all deadlines",
+    why: "You get this email because you asked Regelvakt for reminders.",
+    manage: "Change or stop the reminders",
+  },
+} as const;
+
+export function reminderEmail(input: {
+  to: string;
+  language: EmailLanguage;
+  company: CompanyLine;
+  lines: ReminderLine[];
+  assessmentUrl: string;
+  manageUrl: string;
+  oneClickUnsubscribeUrl: string;
+}): Email {
+  const t = REMINDER[input.language];
+  const [first] = input.lines;
+  const subject =
+    input.lines.length === 1 && first
+      ? t.subjectOne(first, input.company)
+      : t.subjectMany(input.lines.length, input.company);
+
+  return email(
+    input.to,
+    subject,
+    {
+      paragraphs: [t.intro(input.company)],
+      items: input.lines.map((line) => ({
+        title: line.title,
+        lines: [t.due(line, input.language)],
+        links: [
+          { text: t.source, url: line.sourceUrl },
+          ...(line.altinnUrl ? [{ text: t.altinn, url: line.altinnUrl }] : []),
+        ],
+      })),
+      button: { text: t.button, url: input.assessmentUrl },
+      footer: [t.why, DISCLAIMER[input.language]],
+      footerLinks: [{ text: t.manage, url: input.manageUrl }],
+    },
+    unsubscribeHeaders(input.oneClickUnsubscribeUrl),
+  );
+}
+
+// ---- Reminders stopped ----
+
+const STOPPED = {
+  nb: {
+    subject: (c: CompanyLine) => `Påminnelsene for ${c.companyName} er stoppet`,
+    intro: (c: CompanyLine) =>
+      `${c.companyName} (${c.orgNumber}) står ikke lenger som aktiv i Enhetsregisteret, så Regelvakt sender ingen flere påminnelser for den. E-postadressen din er slettet hos oss.`,
+    action:
+      "Har virksomheten fått et nytt organisasjonsnummer, kan du lage en ny vurdering:",
+    button: "Lag en ny vurdering",
+  },
+  en: {
+    subject: (c: CompanyLine) => `Reminders for ${c.companyName} have stopped`,
+    intro: (c: CompanyLine) =>
+      `${c.companyName} (${c.orgNumber}) is no longer listed as active in the Central Coordinating Register, so Regelvakt will send no more reminders for it. Your email address has been deleted.`,
+    action:
+      "If the business has a new organization number, you can make a new assessment:",
+    button: "Make a new assessment",
+  },
+} as const;
+
+export function remindersStoppedEmail(input: {
+  to: string;
+  language: EmailLanguage;
+  company: CompanyLine;
+  startUrl: string;
+}): Email {
+  const t = STOPPED[input.language];
+  return email(input.to, t.subject(input.company), {
+    paragraphs: [t.intro(input.company), t.action],
+    button: { text: t.button, url: input.startUrl },
+    footer: [DISCLAIMER[input.language]],
+  });
 }

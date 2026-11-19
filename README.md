@@ -87,6 +87,7 @@ npm run dev                  # compile, watch and run (applies pending migration
 npm test                     # type check and run the tests
 npm run lint                 # check formatting and lint rules (lint:fix fixes what it can)
 npm run migrate -- pending   # list pending migrations (also: up, down, executed)
+npm run reminders            # run the daily reminder work once, now
 ```
 
 ## API
@@ -156,7 +157,7 @@ Every response carries an `X-Request-Id` header; the same id is in the API's log
 - [x] Subscriptions with double opt-in: confirmation email, signed manage links, change and stop without an account, `List-Unsubscribe` one-click header
 - [x] Email sending (`EMAIL_PROVIDER=log` or Resend), Norwegian and English templates
 - [x] Deleting an assessment deletes its subscriptions and email addresses
-- [ ] Daily reminder job: reminders before deadlines, weekly Brreg refresh, clean-up of old data
+- [x] Daily reminder job: reminders before deadlines, weekly Brreg refresh, clean-up of old data
 
 **Reminder design**
 
@@ -165,10 +166,14 @@ Every response carries an `X-Request-Id` header; the same id is in the API's log
 - Links in emails go to the web app, which calls the API with `POST`. Mail scanners open links on their own, so a `GET` link would confirm or stop reminders by itself.
 - The confirmation token is random and stored only as a hash. The manage token is the subscription id signed with `SUBSCRIPTION_SECRET`, so every email can carry a working link without storing it.
 - Unsubscribing deletes the subscription and the address. `reminder_deliveries` records what was sent, so a reminder is never sent twice.
+- The reminder job runs daily at `EMAIL_HOUR` (07:00 Norwegian time by default), in three steps:
+  1. Clean-up: unconfirmed subscriptions whose link has run out; assessments without any subscription 30 days after they were made (an ENK's snapshot holds the owner's name); records of reminders sent over a year ago.
+  2. Refresh: company snapshots older than a week are fetched again from Brreg for assessments with reminders. A company gone from the register gets no more reminders; its subscribers are told and their addresses deleted.
+  3. Send: a reminder is due when a deadline is at most that many days away and has not been reminded about. A missed day (server down) is caught up on the next run. Everything due for one subscriber goes in one email.
 
 ### Phase 5 – Frontend and deployment
 
-- [ ] Next.js frontend (Norwegian and English)
+- [ ] Next.js frontend (Norwegian and English), including the pages the emails link to: `/assessments/:id`, `/reminders/confirm`, `/reminders/manage` and `/reminders/unsubscribe/one-click` (passes the mail program's one-click POST on to the API)
 - [ ] Docker and deployment
 
 ### Later
@@ -199,6 +204,7 @@ Every response carries an `X-Request-Id` header; the same id is in the API's log
 - JSON request bodies limited to 10 kb; clearer JSON errors (400, 413)
 - No CORS on purpose: as in Leverandørvakt, only the web app's server calls the API, never the browser
 - Reminder subscriptions: tables (`subscriptions`, `reminder_deliveries`, `company_refreshed_at`), double opt-in with confirmation email, signed manage links, change and unsubscribe, delete an assessment with its data; limits per client and per email address
+- Daily reminder job: reminder emails (catching up missed days, never twice, one email per subscriber), weekly Brreg refresh, data clean-up; `npm run reminders` to run it by hand
 
 ## Disclaimer
 
