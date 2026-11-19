@@ -3,7 +3,13 @@ import { defineConfig } from "vitest/config";
 
 // Tests use their own database and settings from .env.test,
 // never the development database in .env. In CI they come from the workflow.
-const testEnv = config({ path: ".env.test", quiet: true }).parsed ?? {};
+// Empty lines such as "SUBSCRIPTION_SECRET=" are left out, so they do not
+// hide the defaults below
+const testEnv = Object.fromEntries(
+  Object.entries(
+    config({ path: ".env.test", quiet: true }).parsed ?? {},
+  ).filter(([, value]) => value !== ""),
+);
 
 // Settings every test run needs that are not secret; .env.test or the CI
 // workflow may override them
