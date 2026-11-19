@@ -6,8 +6,44 @@ DB_NAME=regelvakt
 DB_USER=postgres
 DB_PASSWORD=
 
+# Signs the manage links in reminder emails. At least 32 characters; make
+# one with: node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+# Changing it breaks the links in emails already sent.
+SUBSCRIPTION_SECRET=
+
+# Email. EMAIL_PROVIDER is "log" (write emails to the terminal, the default)
+# or "resend" (send them with https://resend.com, needs RESEND_API_KEY).
+# WEB_APP_URL is where the links in emails point.
+EMAIL_PROVIDER=log
+RESEND_API_KEY=
+EMAIL_FROM=Regelvakt <onboarding@resend.dev>
+WEB_APP_URL=http://localhost:3001
+
+# Logging. LOG_FORMAT=pretty writes readable, coloured lines (needs the
+# pino-pretty dev dependency); leave it out on a server to get JSON lines.
+# LOG_LEVEL is the lowest level written: trace, debug, info, warn, error,
+# fatal or silent.
+LOG_FORMAT=pretty
+LOG_LEVEL=info
+
+# Rate limits per client address, per 15 minutes. Leave out for the defaults.
+# BRREG_REQUESTS_PER_ADDRESS counts the requests that look a company up in
+# Brreg (company, questions, new assessment).
+REQUESTS_PER_ADDRESS=1000
+BRREG_REQUESTS_PER_ADDRESS=100
+# New reminder subscriptions per hour: from one client address, and for one
+# email address from any client (stops filling someone's inbox)
+SUBSCRIPTIONS_PER_ADDRESS=20
+SUBSCRIPTIONS_PER_EMAIL=5
+
+# Proxies whose X-Forwarded-For header is trusted for the client's address.
+# The default trusts this machine and private networks (the web app, Docker).
+# Behind a hosting platform, a number of hops may be needed instead, e.g. 1.
+TRUST_PROXY=loopback, linklocal, uniquelocal
+
 # Test settings: copy to backend/.env.test
 # The test database name must end with _test; tests empty its tables.
+# The tests set SUBSCRIPTION_SECRET, EMAIL_PROVIDER and WEB_APP_URL themselves.
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=regelvakt_test

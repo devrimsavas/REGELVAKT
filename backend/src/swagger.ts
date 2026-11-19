@@ -21,6 +21,11 @@ const doc = {
       name: "Assessments",
       description: "Obligations, deadlines and warnings for a company",
     },
+    {
+      name: "Reminders",
+      description:
+        "Email reminders before deadlines: subscribe, confirm, change, stop",
+    },
     { name: "General", description: "API status" },
   ],
 };

@@ -38,7 +38,7 @@ export const getCompanyByOrgNumber = async (
         return;
     }
   } catch (error: unknown) {
-    console.error(error);
+    req.log.error({ err: error }, "Brreg lookup failed");
     res.status(502).json({ error: "Could not reach the Brreg API" });
   }
 };
@@ -89,7 +89,7 @@ export const getQuestionsByOrgNumber = async (
       questions: questionsFor(facts).map(toQuestionView),
     });
   } catch (error: unknown) {
-    console.error(error);
+    req.log.error({ err: error }, "Brreg lookup failed");
     res.status(502).json({ error: "Could not reach the Brreg API" });
   }
 };

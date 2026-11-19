@@ -4,6 +4,7 @@ import type { Request, Response } from "express";
 import express from "express";
 import assessmentsRouter from "./assessments.js";
 import companiesRouter from "./companies.js";
+import subscriptionsRouter from "./subscriptions.js";
 
 const router = express.Router();
 
@@ -16,5 +17,6 @@ router.get("/", (_req: Request, res: Response) => {
 
 router.use("/companies", companiesRouter);
 router.use("/assessments", assessmentsRouter);
+router.use("/subscriptions", subscriptionsRouter);
 
 export default router;

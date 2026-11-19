@@ -6,9 +6,7 @@ import { RULES_VERSION } from "../rules/version.js";
 import { lookupCompany } from "../services/brregService.js";
 import { isValidOrgNumber } from "../utils/orgNumber.js";
 import { todayInNorway } from "../utils/today.js";
-
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+import { isUuid } from "../utils/uuid.js";
 
 // The stored assessment together with a result calculated from today's rules
 function toResponse(assessment: Assessment) {
@@ -62,7 +60,7 @@ export const createAssessment = async (req: Request, res: Response) => {
   try {
     lookup = await lookupCompany(orgNumber);
   } catch (error: unknown) {
-    console.error(error);
+    req.log.error({ err: error }, "Brreg lookup failed");
     res.status(502).json({ error: "Could not reach the Brreg API" });
     return;
   }
@@ -113,7 +111,7 @@ export const getAssessmentById = async (
   // #swagger.summary = "A stored assessment, recalculated with today's date"
   const { id } = req.params;
 
-  if (!UUID_PATTERN.test(id)) {
+  if (!isUuid(id)) {
     res.status(400).json({ error: "Invalid assessment id" });
     return;
   }
@@ -126,4 +124,30 @@ export const getAssessmentById = async (
   }
 
   res.json(toResponse(assessment));
+};
+
+// DELETE /api/assessments/:id
+export const deleteAssessment = async (
+  req: Request<{ id: string }>,
+  res: Response,
+) => {
+  // #swagger.tags = ["Assessments"]
+  // #swagger.summary = "Delete an assessment and its reminders"
+  /* #swagger.description = "Deletes the assessment, every reminder subscription for it (email addresses included) and the record of sent reminders. Anyone with the assessment's id can do this." */
+  const { id } = req.params;
+
+  if (!isUuid(id)) {
+    res.status(400).json({ error: "Invalid assessment id" });
+    return;
+  }
+
+  // The database deletes the subscriptions and their deliveries with it
+  const deleted = await Assessment.destroy({ where: { id } });
+
+  if (deleted === 0) {
+    res.status(404).json({ error: "Assessment not found" });
+    return;
+  }
+
+  res.status(204).end();
 };

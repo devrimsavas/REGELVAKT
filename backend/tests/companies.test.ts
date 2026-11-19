@@ -3,6 +3,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import app from "../src/app.js";
 import { toCompany } from "../src/mappers/companyMapper.js";
 import type { BrregEnhet } from "../src/types/brreg.js";
+import { LEVELS, useLogs } from "./helpers/logs.js";
+
+const logs = useLogs();
 
 // A valid organization number (Brønnøysundregistrene)
 const ORG_NUMBER = "974760673";
@@ -132,18 +135,20 @@ describe("GET /api/companies/:orgNumber", () => {
 
   it("returns 502 when Brreg fails", async () => {
     mockBrreg(500);
-    vi.spyOn(console, "error").mockImplementation(() => {});
 
     const res = await request(app).get(`/api/companies/${ORG_NUMBER}`);
 
     expect(res.status).toBe(502);
+    // The cause is logged with the request id, for finding it later
+    const line = logs.lines.find((l) => l.msg === "Brreg lookup failed");
+    expect(line?.level).toBe(LEVELS.error);
+    expect(line?.requestId).toBe(res.headers["x-request-id"]);
   });
 
   it("returns 502 when Brreg cannot be reached", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValue(
       new TypeError("fetch failed"),
     );
-    vi.spyOn(console, "error").mockImplementation(() => {});
 
     const res = await request(app).get(`/api/companies/${ORG_NUMBER}`);
 

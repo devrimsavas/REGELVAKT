@@ -1,5 +1,7 @@
 import { Sequelize } from "sequelize-typescript";
 import { Assessment } from "../models/Assessment.js";
+import { ReminderDelivery } from "../models/ReminderDelivery.js";
+import { Subscription } from "../models/Subscription.js";
 import { requireEnv } from "./env.js";
 
 export const sequelize = new Sequelize({
@@ -10,6 +12,6 @@ export const sequelize = new Sequelize({
   username: requireEnv("DB_USER"),
   password: requireEnv("DB_PASSWORD"),
   // Models are listed here one by one as they are added
-  models: [Assessment],
+  models: [Assessment, Subscription, ReminderDelivery],
   logging: false,
 });
