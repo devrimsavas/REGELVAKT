@@ -1,7 +1,39 @@
 import { SOURCE_URLS } from "./obligations.js";
 import type { WarningDefinition } from "./types.js";
 
+// The company's own entry in the Central Coordinating Register, where the
+// winding-up status and its details are shown
+const REGISTER_LOOKUP =
+  "https://data.brreg.no/enhetsregisteret/oppslag/enheter";
+
 export const WARNINGS: WarningDefinition[] = [
+  {
+    id: "company-bankrupt",
+    appliesTo: (facts) => facts.windingUp === "bankrupt",
+    message: {
+      nb: "Enhetsregisteret viser at virksomheten er konkurs. Da er det bostyreren som har ansvaret for de fleste pliktene overfor Skatteetaten og Brønnøysundregistrene, og fristene under gjelder kanskje ikke lenger for deg. Snakk med bostyreren.",
+      en: "The Central Coordinating Register shows that the business is bankrupt. The trustee in bankruptcy is then responsible for most obligations to the Tax Administration and the Brønnøysund Register Centre, and the deadlines below may no longer apply to you. Talk to the trustee.",
+    },
+    sourceUrl: REGISTER_LOOKUP,
+  },
+  {
+    id: "company-forced-liquidation",
+    appliesTo: (facts) => facts.windingUp === "forcedLiquidation",
+    message: {
+      nb: "Enhetsregisteret viser at virksomheten er under tvangsavvikling eller tvangsoppløsning. Det skjer blant annet når årsregnskap ikke er sendt inn, eller når selskapet mangler styre eller revisor. Finn ut hva som mangler så snart som mulig; pliktene under gjelder fortsatt.",
+      en: "The Central Coordinating Register shows that the business is under forced liquidation or dissolution. This happens for example when annual accounts have not been submitted, or the company has no board or auditor. Find out what is missing as soon as possible; the obligations below still apply.",
+    },
+    sourceUrl: REGISTER_LOOKUP,
+  },
+  {
+    id: "company-under-liquidation",
+    appliesTo: (facts) => facts.windingUp === "liquidation",
+    message: {
+      nb: "Enhetsregisteret viser at virksomheten er under avvikling. Pliktene under gjelder til virksomheten er slettet, og det siste året skal også rapporteres, blant annet i skattemeldingen.",
+      en: "The Central Coordinating Register shows that the business is being wound up. The obligations below apply until it is deleted, and the last year must be reported too, for example in the tax return.",
+    },
+    sourceUrl: REGISTER_LOOKUP,
+  },
   {
     id: "vat-registration-required",
     appliesTo: (facts) =>

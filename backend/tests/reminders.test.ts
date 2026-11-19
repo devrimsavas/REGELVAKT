@@ -449,7 +449,7 @@ describe("a whole run", () => {
 
     const summary = await runReminders(morning("2026-11-26"));
 
-    expect(summary.send.emailsSent).toBe(1);
+    expect(summary?.send.emailsSent).toBe(1);
     const line = logs.lines.find((l) => l.msg?.startsWith("Reminders:"));
     expect(line?.msg).toBe("Reminders: 1 emails sent, 0 failed");
     // No email addresses in the logs

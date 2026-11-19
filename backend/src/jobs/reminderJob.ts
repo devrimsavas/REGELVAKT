@@ -38,37 +38,64 @@ export function hourInNorway(now: Date): number {
   );
 }
 
+function dayInNorway(now: Date): string {
+  return todayInNorway(now).toISOString().slice(0, 10);
+}
+
 // Whether today's run is due: the hour has come and it has not run today
 export function isRunDue(now: Date, lastRunDay: string | null): boolean {
-  const today = todayInNorway(now).toISOString().slice(0, 10);
-  return lastRunDay !== today && hourInNorway(now) >= emailHour();
+  return lastRunDay !== dayInNorway(now) && hourInNorway(now) >= emailHour();
 }
 
 let lastRunDay: string | null = null;
-let isRunning = false;
+let timer: NodeJS.Timeout | null = null;
+// The run going on, so stopping can wait for it
+let currentRun: Promise<void> | null = null;
 
-async function checkAndRun(): Promise<void> {
-  const now = new Date();
-  if (isRunning || !isRunDue(now, lastRunDay)) return;
-
-  isRunning = true;
+async function run(now: Date): Promise<void> {
   try {
-    await runReminders(now);
-    lastRunDay = todayInNorway(now).toISOString().slice(0, 10);
+    const summary = await runReminders(now);
+    // A run skipped because another one holds the lock is not today's run;
+    // the next check tries again
+    if (summary !== null) lastRunDay = dayInNorway(now);
   } catch (error: unknown) {
     // Tried again at the next check
     log.error({ err: error }, "The reminder run failed");
-  } finally {
-    isRunning = false;
   }
 }
 
+function checkAndRun(): void {
+  const now = new Date();
+  if (currentRun || !isRunDue(now, lastRunDay)) return;
+
+  currentRun = run(now).finally(() => {
+    currentRun = null;
+  });
+}
+
 export function startReminderJob(): void {
+  if (timer) return;
   const minutes = checkMinutes();
   log.info(
     `Reminders run daily at ${String(emailHour()).padStart(2, "0")}:00 Norwegian time (checked every ${minutes} min)`,
   );
-  void checkAndRun();
+  checkAndRun();
   // unref: the timer alone does not keep the process running
-  setInterval(() => void checkAndRun(), minutes * 60 * 1000).unref();
+  timer = setInterval(checkAndRun, minutes * 60 * 1000);
+  timer.unref();
+}
+
+// Stops the checks and waits for a run that is going on, so the server can
+// shut down without cutting a run off in the middle of sending emails
+export async function stopReminderJob(): Promise<void> {
+  if (timer) {
+    clearInterval(timer);
+    timer = null;
+  }
+  await currentRun;
+}
+
+// For tests: forget that today's run has been done
+export function resetReminderJob(): void {
+  lastRunDay = null;
 }

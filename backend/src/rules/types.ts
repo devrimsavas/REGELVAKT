@@ -39,9 +39,13 @@ export interface Answers {
 export type QuestionId = keyof Answers;
 
 // What the rules know about the company before any question is answered
+// Brreg's flags for a company that is being wound up. null when none is set.
+export type WindingUp = "bankrupt" | "forcedLiquidation" | "liquidation";
+
 export interface CompanyFacts {
   organizationForm: SupportedOrganizationForm;
   vatRegistered: boolean;
+  windingUp: WindingUp | null;
   // Employee count from Brreg; only a hint, since Brreg often leaves it out
   employeesHint: number | null;
 }
@@ -95,8 +99,11 @@ export interface ObligationDefinition {
   id: string;
   title: LocalizedText;
   description: LocalizedText;
+  // The official page that explains the obligation
   sourceUrl: string;
-  altinnUrl: string | null;
+  // Where it is filed or paid, when there is one service everybody uses;
+  // null when it is done from an accounting system or there are several ways
+  filingUrl: string | null;
   appliesTo: (facts: Facts) => boolean;
   // Why the obligation applies to this company, shown to the user
   reason: (facts: Facts) => LocalizedText;
@@ -120,7 +127,7 @@ export interface ObligationResult {
   description: LocalizedText;
   reason: LocalizedText;
   sourceUrl: string;
-  altinnUrl: string | null;
+  filingUrl: string | null;
   nextDeadline: IsoDate | null;
   // Deadlines in the next twelve months, the next one first
   upcomingDeadlines: IsoDate[];

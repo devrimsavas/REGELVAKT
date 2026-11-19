@@ -2,7 +2,8 @@
 // reminders that are due and delete data that is no longer needed.
 // Each step is its own function, so the job and the tests can run them
 // one by one; runReminders() runs them all in order.
-import { literal, Op } from "sequelize";
+import { literal, Op, QueryTypes } from "sequelize";
+import { sequelize } from "../config/database.js";
 import { logger } from "../config/logger.js";
 import { Assessment } from "../models/Assessment.js";
 import { ReminderDelivery } from "../models/ReminderDelivery.js";
@@ -19,6 +20,7 @@ import {
   type ReminderLine,
   reminderEmail,
   remindersStoppedEmail,
+  type StopReason,
 } from "./email/templates.js";
 import { manageUrl, oneClickUnsubscribeUrl } from "./subscriptionService.js";
 
@@ -96,13 +98,24 @@ export async function refreshCompanies(
   for (const assessment of assessments) {
     let lookup: Awaited<ReturnType<typeof lookupCompany>>;
     try {
-      lookup = await lookupCompany(assessment.orgNumber);
+      lookup = await lookupCompany(assessment.orgNumber, { fresh: true });
     } catch (error: unknown) {
       log.warn(
         { err: error, assessmentId: assessment.id },
         "Could not refresh the company from Brreg",
       );
       summary.failed++;
+      continue;
+    }
+
+    if (lookup.status === "active" && lookup.company.isBankrupt) {
+      await stopReminders(assessment, "bankrupt");
+      // The new data is kept, so the page shows the bankruptcy
+      await assessment.update({
+        companySnapshot: lookup.company,
+        companyRefreshedAt: now,
+      });
+      summary.stopped++;
       continue;
     }
 
@@ -130,21 +143,30 @@ export async function refreshCompanies(
       continue;
     }
 
-    // Struck off or gone from the register. The reminders stop even if
-    // an email cannot be sent.
-    await tellSubscribers(assessment, (subscription) =>
-      remindersStoppedEmail({
-        to: subscription.email,
-        language: subscription.language,
-        company: companyLine(assessment),
-        startUrl: webAppUrl(),
-      }),
-    );
-    await Subscription.destroy({ where: { assessmentId: assessment.id } });
+    // Struck off or gone from the register
+    await stopReminders(assessment, "deleted");
     summary.stopped++;
   }
 
   return summary;
+}
+
+// Tells the subscribers why, then deletes the subscriptions. The reminders
+// stop even if an email cannot be sent.
+async function stopReminders(
+  assessment: Assessment,
+  reason: StopReason,
+): Promise<void> {
+  await tellSubscribers(assessment, (subscription) =>
+    remindersStoppedEmail({
+      to: subscription.email,
+      language: subscription.language,
+      company: companyLine(assessment),
+      reason,
+      startUrl: webAppUrl(),
+    }),
+  );
+  await Subscription.destroy({ where: { assessmentId: assessment.id } });
 }
 
 // Sends each active subscriber of the assessment an email; one that fails
@@ -190,6 +212,9 @@ export function dueReminders(
   delivered: ReadonlySet<string>,
   today: Date,
 ): DueReminder[] {
+  // A bankrupt company's obligations are the trustee's (see refreshCompanies)
+  if (assessment.companySnapshot.isBankrupt) return [];
+
   const result = assess(assessment.companySnapshot, assessment.answers, today);
   if (!result.supported) return [];
 
@@ -215,7 +240,7 @@ export function dueReminders(
           deadline,
           daysLeft,
           sourceUrl: obligation.sourceUrl,
-          altinnUrl: obligation.altinnUrl,
+          filingUrl: obligation.filingUrl,
         },
       });
     }
@@ -344,17 +369,41 @@ export interface ReminderRunSummary {
   cleanup: CleanupSummary;
 }
 
+// A fixed number naming the reminder run's lock in PostgreSQL
+export const REMINDER_LOCK_KEY = 7_364_020;
+
+// Runs the three steps, or nothing if another run is going on. Two runs at
+// the same time (two servers during a restart, or `npm run reminders` while
+// the server runs) could send the same email twice: the record of sent
+// reminders is written after sending. A PostgreSQL advisory lock lets only
+// one run go on; it is held by a transaction that lasts the whole run, so
+// it is let go when the run ends, fails or loses its connection.
 export async function runReminders(
   now = new Date(),
-): Promise<ReminderRunSummary> {
-  // Clean-up first: no reminders for what is about to be deleted
-  const cleanup = await cleanUp(now);
-  const refresh = await refreshCompanies(now);
-  const send = await sendDueReminders(now);
-  const summary = { refresh, send, cleanup };
-  log.info(
-    summary,
-    `Reminders: ${send.emailsSent} emails sent, ${send.failed} failed`,
-  );
-  return summary;
+): Promise<ReminderRunSummary | null> {
+  return sequelize.transaction(async (transaction) => {
+    const [row] = await sequelize.query<{ locked: boolean }>(
+      "SELECT pg_try_advisory_xact_lock(:key) AS locked",
+      {
+        replacements: { key: REMINDER_LOCK_KEY },
+        type: QueryTypes.SELECT,
+        transaction,
+      },
+    );
+    if (!row?.locked) {
+      log.warn("Another reminder run is going on; this one does nothing");
+      return null;
+    }
+
+    // Clean-up first: no reminders for what is about to be deleted
+    const cleanup = await cleanUp(now);
+    const refresh = await refreshCompanies(now);
+    const send = await sendDueReminders(now);
+    const summary = { refresh, send, cleanup };
+    log.info(
+      summary,
+      `Reminders: ${send.emailsSent} emails sent, ${send.failed} failed`,
+    );
+    return summary;
+  });
 }

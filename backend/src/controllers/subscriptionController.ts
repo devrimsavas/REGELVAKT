@@ -81,6 +81,15 @@ export const createSubscription = async (
     return;
   }
 
+  // The trustee in bankruptcy has taken over the obligations, so reminders
+  // to the owner would be wrong
+  if (assessment.companySnapshot.isBankrupt) {
+    res.status(422).json({
+      error: "Reminders are not available for a bankrupt company",
+    });
+    return;
+  }
+
   try {
     await subscribe(assessment, parsed.value);
   } catch (error: unknown) {

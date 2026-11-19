@@ -1,6 +1,7 @@
 // The obligations Regelvakt knows about, for ENK and AS.
 // Deadlines and rules verified against Skatteetaten and Brønnøysundregistrene
-// in November 2026 (see RULES_VERSION).
+// in November 2026 (see RULES_VERSION). Every source and filing link was
+// checked on 19 November 2026.
 import type { DeadlineSchedule, ObligationDefinition } from "./types.js";
 
 const URLS = {
@@ -9,9 +10,9 @@ const URLS = {
   vatAnnualTerm:
     "https://www.skatteetaten.no/bedrift-og-organisasjon/avgifter/mva/betale-mva/sma-virksomheter-kan-soke-om-a-rapportere-mva-en-gang-i-aret/",
   taxReturnEnk:
-    "https://www.skatteetaten.no/nn/bedrift-og-organisasjon/skatt-for-bedrift-og-organisasjon/skattemelding-for-naringsdrivande/skattemelding-for-enkeltpersonforetak/",
+    "https://www.skatteetaten.no/bedrift-og-organisasjon/skatt/skattemelding-naringsdrivende/enk/",
   taxReturnCompany:
-    "https://www.skatteetaten.no/nn/bedrift-og-organisasjon/skatt-for-bedrift-og-organisasjon/skattemelding-for-naringsdrivande/",
+    "https://www.skatteetaten.no/bedrift-og-organisasjon/skatt/skattemelding-naringsdrivende/selskap/",
   advanceTaxEnk:
     "https://www.skatteetaten.no/bedrift-og-organisasjon/skatt/forskuddsskatt/forskuddsskatt-for-enkeltpersonforetak/",
   advanceTaxAs:
@@ -25,7 +26,17 @@ const URLS = {
   annualAccounts: "https://www.brreg.no/bedrift/arsregnskap/",
   generalMeeting: "https://lovdata.no/lov/1997-06-13-44/§5-5",
   bookkeeping:
-    "https://www.skatteetaten.no/bedrift-og-organisasjon/starte-og-drive/ny-som-naringsdrivende/oppstart/",
+    "https://www.skatteetaten.no/nn/bedrift-og-organisasjon/starte-og-drive/rutiner-regnskap-og-kassasystem/gode-rutiner-for-daglig-drift/regnskap/",
+} as const;
+
+// Where to file or pay, for the obligations that have one common service
+const FILING_URLS = {
+  vatReturn: "https://skatt.skatteetaten.no/web/mva/",
+  // For employers without a payroll system; others file from that system
+  aMelding:
+    "https://www.skatteetaten.no/skjema/direkte-levering-av-a-meldingen/",
+  annualAccounts:
+    "https://info.altinn.no/en/forms-overview/bronnoysund-register-centre/annual-accounts/",
 } as const;
 
 // VAT terms of two months: due one month and ten days after the term,
@@ -59,7 +70,7 @@ export const OBLIGATIONS: ObligationDefinition[] = [
       en: "The tax return for a sole proprietorship is the personal tax return with business information added. It is filed electronically.",
     },
     sourceUrl: URLS.taxReturnEnk,
-    altinnUrl: null,
+    filingUrl: null,
     appliesTo: (facts) => facts.organizationForm === "ENK",
     reason: () => ({
       nb: "Alle enkeltpersonforetak må levere skattemelding, også uten omsetning.",
@@ -75,7 +86,7 @@ export const OBLIGATIONS: ObligationDefinition[] = [
       en: "The limited company files its own tax return, through accounting or year-end software.",
     },
     sourceUrl: URLS.taxReturnCompany,
-    altinnUrl: null,
+    filingUrl: null,
     appliesTo: (facts) => facts.organizationForm === "AS",
     reason: () => ({
       nb: "Alle aksjeselskap må levere skattemelding, også uten omsetning.",
@@ -91,7 +102,7 @@ export const OBLIGATIONS: ObligationDefinition[] = [
       en: "Tax on the profit is paid in advance in four equal instalments during the year. The amount follows your tax card.",
     },
     sourceUrl: URLS.advanceTaxEnk,
-    altinnUrl: null,
+    filingUrl: null,
     appliesTo: (facts) =>
       facts.organizationForm === "ENK" && facts.expectsProfit === true,
     reason: () => ({
@@ -116,7 +127,7 @@ export const OBLIGATIONS: ObligationDefinition[] = [
       en: "Advance tax is paid in two equal instalments in the year after the income year. The amount is announced in January.",
     },
     sourceUrl: URLS.advanceTaxAs,
-    altinnUrl: null,
+    filingUrl: null,
     appliesTo: (facts) => facts.organizationForm === "AS",
     reason: () => ({
       nb: "Aksjeselskap skal betale forskuddsskatt.",
@@ -138,7 +149,7 @@ export const OBLIGATIONS: ObligationDefinition[] = [
       en: "The VAT return shows how much VAT is payable or refundable. Payment is due on the filing date, and the return is filed even when sales are zero.",
     },
     sourceUrl: URLS.vatReturn,
-    altinnUrl: null,
+    filingUrl: FILING_URLS.vatReturn,
     appliesTo: (facts) => facts.vatRegistered,
     reason: (facts) =>
       facts.vatTerm === "annual"
@@ -170,7 +181,7 @@ export const OBLIGATIONS: ObligationDefinition[] = [
       en: "The a-melding reports salaries, withholding tax and employer's contribution every month, and employment status even in months without pay.",
     },
     sourceUrl: URLS.aMelding,
-    altinnUrl: null,
+    filingUrl: FILING_URLS.aMelding,
     appliesTo: (facts) => facts.paysSalary === true,
     reason: () => ({
       nb: "Du betaler lønn, og alle arbeidsgivere må levere a-melding.",
@@ -189,7 +200,7 @@ export const OBLIGATIONS: ObligationDefinition[] = [
       en: "Employer's contribution for the two previous months is paid every other month. Withholding tax is paid no later than the first business day after each payday.",
     },
     sourceUrl: URLS.employerContribution,
-    altinnUrl: null,
+    filingUrl: null,
     appliesTo: (facts) => facts.paysSalary === true,
     reason: () => ({
       nb: "Du betaler lønn, og arbeidsgiver betaler arbeidsgiveravgift av lønnen.",
@@ -218,7 +229,7 @@ export const OBLIGATIONS: ObligationDefinition[] = [
       en: "The statement shows who owned the shares on 31 December, and changes, dividends and capital changes during the year.",
     },
     sourceUrl: URLS.shareholderRegister,
-    altinnUrl: null,
+    filingUrl: null,
     appliesTo: (facts) => facts.organizationForm === "AS",
     reason: () => ({
       nb: "Alle aksjeselskap må levere aksjonærregisteroppgaven.",
@@ -237,7 +248,7 @@ export const OBLIGATIONS: ObligationDefinition[] = [
       en: "The general meeting approves the annual accounts. It is held within six months after the end of the financial year; small companies can often hold it in a simplified form.",
     },
     sourceUrl: URLS.generalMeeting,
-    altinnUrl: null,
+    filingUrl: null,
     appliesTo: (facts) => facts.organizationForm === "AS",
     reason: () => ({
       nb: "Aksjeselskap må holde ordinær generalforsamling hvert år.",
@@ -256,7 +267,7 @@ export const OBLIGATIONS: ObligationDefinition[] = [
       en: "The annual accounts are submitted no later than one month after they are approved. To avoid a late filing fee they must be submitted by 31 July.",
     },
     sourceUrl: URLS.annualAccounts,
-    altinnUrl: null,
+    filingUrl: FILING_URLS.annualAccounts,
     appliesTo: (facts) => facts.organizationForm === "AS",
     reason: () => ({
       nb: "Alle aksjeselskap er regnskapspliktige og må sende inn årsregnskap.",
@@ -272,7 +283,7 @@ export const OBLIGATIONS: ObligationDefinition[] = [
       en: "All income and expenses must be recorded continuously, and receipts and other documentation must be kept for five years.",
     },
     sourceUrl: URLS.bookkeeping,
-    altinnUrl: null,
+    filingUrl: null,
     appliesTo: () => true,
     reason: () => ({
       nb: "Alle næringsdrivende har bokføringsplikt.",

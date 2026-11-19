@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Assessment } from "../src/models/Assessment.js";
+import { RULES_VERSION } from "../src/rules/version.js";
 import type { Company } from "../src/types/company.js";
 
 const company: Company = {
@@ -27,7 +28,7 @@ describe("Assessment model", () => {
       orgNumber: company.orgNumber,
       companySnapshot: company,
       answers: { vatTerm: "bimonthly", paysSalary: false, expectsProfit: true },
-      rulesVersion: "2026.1",
+      rulesVersion: RULES_VERSION,
     });
 
     // A random UUID, not a running number
@@ -44,7 +45,7 @@ describe("Assessment model", () => {
       paysSalary: false,
       expectsProfit: true,
     });
-    expect(found?.rulesVersion).toBe("2026.1");
+    expect(found?.rulesVersion).toBe(RULES_VERSION);
     expect(found?.createdAt).toBeInstanceOf(Date);
   });
 

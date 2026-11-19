@@ -1,13 +1,51 @@
 import "reflect-metadata";
 import "dotenv/config";
+import type { Server } from "node:http";
 import app from "./app.js";
 import { sequelize } from "./config/database.js";
 import { logger } from "./config/logger.js";
 import { migrator } from "./config/migrator.js";
-import { startReminderJob } from "./jobs/reminderJob.js";
+import { startReminderJob, stopReminderJob } from "./jobs/reminderJob.js";
 import { subscriptionSecret } from "./utils/tokens.js";
 
 const PORT = process.env.PORT;
+
+// How long a shutdown may take before the process is stopped anyway
+const SHUTDOWN_TIMEOUT_MS = 30_000;
+
+let httpServer: Server | null = null;
+let shuttingDown = false;
+
+// On Ctrl+C (SIGINT) or a stop from Docker or the operating system
+// (SIGTERM): stop taking requests, let the ones in progress and a reminder
+// run that is going on finish, then close the database connections
+async function shutdown(signal: string): Promise<void> {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  logger.info(`${signal} received, shutting down`);
+
+  const timeout = setTimeout(() => {
+    logger.error("Shutdown took too long; stopping now");
+    process.exit(1);
+  }, SHUTDOWN_TIMEOUT_MS);
+  timeout.unref();
+
+  try {
+    const closed = new Promise<void>((resolve, reject) => {
+      if (!httpServer) return resolve();
+      httpServer.close((error) => (error ? reject(error) : resolve()));
+      // Idle keep-alive connections would otherwise hold close() open
+      httpServer.closeIdleConnections();
+    });
+    await Promise.all([closed, stopReminderJob()]);
+    await sequelize.close();
+    logger.info("Shut down");
+    process.exit(0);
+  } catch (error: unknown) {
+    logger.error({ err: error }, "Error while shutting down");
+    process.exit(1);
+  }
+}
 
 const server = async () => {
   try {
@@ -20,7 +58,7 @@ const server = async () => {
 
     await migrator.up();
 
-    app.listen(PORT, (error) => {
+    httpServer = app.listen(PORT, (error) => {
       if (error) {
         logger.fatal({ err: error }, "Server failed to start");
         process.exit(1);
@@ -30,6 +68,9 @@ const server = async () => {
       // Background work
       startReminderJob();
     });
+
+    process.on("SIGTERM", () => void shutdown("SIGTERM"));
+    process.on("SIGINT", () => void shutdown("SIGINT"));
   } catch (error: unknown) {
     logger.fatal({ err: error }, "Startup error");
     process.exit(1);

@@ -2,6 +2,7 @@ import request from "supertest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import app from "../src/app.js";
 import { Assessment } from "../src/models/Assessment.js";
+import { RULES_VERSION } from "../src/rules/version.js";
 import type { BrregEnhet } from "../src/types/brreg.js";
 
 // A valid organization number (the mod 11 check digit matches)
@@ -93,7 +94,7 @@ describe("POST /api/assessments", () => {
 
     expect(res.status).toBe(201);
     expect(res.body.company.name).toBe("AYSE FRISØR");
-    expect(res.body.rulesVersionAtCreation).toBe("2026.1");
+    expect(res.body.rulesVersionAtCreation).toBe(RULES_VERSION);
     expect(res.body.result.supported).toBe(true);
     expect(
       res.body.result.obligations.map(

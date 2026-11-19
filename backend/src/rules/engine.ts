@@ -10,6 +10,7 @@ import {
   type Facts,
   isSupportedOrganizationForm,
   type ObligationResult,
+  type WindingUp,
 } from "./types.js";
 import { RULES_VERSION } from "./version.js";
 import { WARNINGS } from "./warnings.js";
@@ -24,8 +25,19 @@ export function toCompanyFacts(company: Company): CompanyFacts | null {
   return {
     organizationForm: company.organizationForm,
     vatRegistered: company.vatRegistered,
+    windingUp: windingUpOf(company),
     employeesHint: company.employees,
   };
+}
+
+// The most serious of Brreg's winding-up flags: a bankruptcy takes the
+// obligations over from the owners, a forced liquidation is about to
+// dissolve the company, an ordinary liquidation is the owners' own choice
+export function windingUpOf(company: Company): WindingUp | null {
+  if (company.isBankrupt) return "bankrupt";
+  if (company.isUnderForcedLiquidation) return "forcedLiquidation";
+  if (company.isUnderLiquidation) return "liquidation";
+  return null;
 }
 
 function toFacts(company: CompanyFacts, answers: Answers): Facts {
@@ -72,7 +84,7 @@ export function assess(
       description: definition.description,
       reason: definition.reason(facts),
       sourceUrl: definition.sourceUrl,
-      altinnUrl: definition.altinnUrl,
+      filingUrl: definition.filingUrl,
       nextDeadline: upcoming[0] ?? null,
       upcomingDeadlines: upcoming,
     };

@@ -19,7 +19,7 @@ Source: [Fiken – Forenkling for næringslivet](https://www.regjeringen.no/cont
 
 1. **Enter an organisation number.** Organisation form, VAT registration, employees, industry code and founding date are fetched from Brønnøysundregistrene.
 2. **Answer a few short questions.** Questions depend on organisation form and VAT status (e.g. expected sales, payroll, expected profit).
-3. **See "Your obligations".** Each obligation shows a short explanation, the next deadline, the official source and a link to Altinn.
+3. **See "Your obligations".** Each obligation shows a short explanation, the next deadline, the official source and, where there is one, the service where it is filed.
 4. **Ask a question.** An AI assistant answers from a knowledge base built on official pages and always cites its source.
 5. **Get reminders.** Optional email reminders before deadlines.
 
@@ -130,6 +130,10 @@ Every response carries an `X-Request-Id` header; the same id is in the API's log
 - [x] Brønnøysund client and `GET /api/companies/:orgNumber` (incl. organization number check digit validation)
 - [x] Linting and formatting (Biome)
 - [x] Security and logging: security headers (helmet), rate limits, request size limit, structured request logs with request ids (pino)
+- [x] Brreg answers checked before use; active companies cached for 10 minutes
+- [x] Graceful shutdown on SIGTERM/SIGINT: requests in progress and a running reminder job finish, then the database connections close
+
+**Runs as one process.** The rate limit counts and the Brreg cache are kept in the process's memory, which fits a single server. The reminder job is safe with more than one process (a PostgreSQL advisory lock lets only one run go on), but the rate limits would then count per process.
 
 ### Phase 2 – Rule engine
 - [x] Data model design (see below)
@@ -138,14 +142,15 @@ Every response carries an `X-Request-Id` header; the same id is in the API's log
 - [x] Engine: company + answers → obligations, reasons, deadlines and warnings
 - [x] `assessments` table (migration and model), tests against a real PostgreSQL database (also in CI)
 - [x] API: questions, `POST /api/assessments` and `GET /api/assessments/:id`, Swagger docs
-- [ ] Verify the source links marked for checking and add Altinn links
+- [x] Source links checked one by one (19 Nov 2026) and filing links added where one service is used by everybody (rules version 2026.2)
+- [x] Warnings for companies that are bankrupt, under forced liquidation or being wound up
 
 **Rule engine design**
 
 - Rules live in code (versioned, unit tested); results are not stored but recalculated from the rules.
 - The engine is a pure function: company + answers + today's date → result. No database or network access.
 - _Facts_ combine Brreg data (organization form, VAT registration, employees as a hint) with answers (VAT term, expected sales, payroll, expected profit).
-- Each _question_ carries the condition for when it is asked; each _obligation_ carries `appliesTo`, a human readable `reason`, a deadline schedule and links to its official source and Altinn.
+- Each _question_ carries the condition for when it is asked; each _obligation_ carries `appliesTo`, a human readable `reason`, a deadline schedule, a link to its official source and, where there is one, a link to where it is filed (`filingUrl`; `null` when it is filed from an accounting system).
 - Deadline schedules: `annual`, `periodic` and `monthly`; deadlines on weekends and public holidays move to the next business day.
 - Supported organization forms are listed in the rules (first version: ENK and AS); other forms get a clear "not supported yet" result.
 - `assessments` stores the organization number, a company snapshot, the answers and the rules version.
@@ -213,6 +218,7 @@ Every response carries an `X-Request-Id` header; the same id is in the API's log
 - Calendar subscription (`calendar.ics`): whole-day events with the reason, source and a three-day alert; stable event ids; checked with an independent iCalendar parser
 - Unused assessments are deleted 30 days after their last use, not after they were made; subscribers are emailed once when new Brreg data needs new answers
 - Daily reminder job: reminder emails (catching up missed days, never twice, one email per subscriber), weekly Brreg refresh, data clean-up; `npm run reminders` to run it by hand
+- Backend review: source links checked one by one and filing links added (rules 2026.2); warnings for bankrupt companies and companies being wound up, and no reminders for bankrupt ones; Brreg answers checked before they are stored; Brreg cache; graceful shutdown; only one reminder run at a time (PostgreSQL advisory lock)
 
 ## Disclaimer
 

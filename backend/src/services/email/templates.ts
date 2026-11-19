@@ -218,7 +218,7 @@ export interface ReminderLine {
   deadline: string; // YYYY-MM-DD
   daysLeft: number;
   sourceUrl: string;
-  altinnUrl: string | null;
+  filingUrl: string | null;
 }
 
 const LOCALES: Record<EmailLanguage, string> = { nb: "nb-NO", en: "en-GB" };
@@ -253,7 +253,7 @@ const REMINDER = {
     due: (line: ReminderLine, language: EmailLanguage) =>
       `Frist: ${formatDate(line.deadline, language)} (${REMINDER.nb.when(line.daysLeft)})`,
     source: "Les mer",
-    altinn: "Åpne i Altinn",
+    filing: "Gå til innlevering",
     button: "Se alle frister",
     why: "Du får denne e-posten fordi du har bedt om påminnelser fra Regelvakt.",
     manage: "Endre eller stopp påminnelsene",
@@ -270,7 +270,7 @@ const REMINDER = {
     due: (line: ReminderLine, language: EmailLanguage) =>
       `Deadline: ${formatDate(line.deadline, language)} (${REMINDER.en.when(line.daysLeft)})`,
     source: "Read more",
-    altinn: "Open in Altinn",
+    filing: "Go to filing",
     button: "See all deadlines",
     why: "You get this email because you asked Regelvakt for reminders.",
     manage: "Change or stop the reminders",
@@ -303,7 +303,7 @@ export function reminderEmail(input: {
         lines: [t.due(line, input.language)],
         links: [
           { text: t.source, url: line.sourceUrl },
-          ...(line.altinnUrl ? [{ text: t.altinn, url: line.altinnUrl }] : []),
+          ...(line.filingUrl ? [{ text: t.filing, url: line.filingUrl }] : []),
         ],
       })),
       button: { text: t.button, url: input.assessmentUrl },
@@ -316,19 +316,33 @@ export function reminderEmail(input: {
 
 // ---- Reminders stopped ----
 
+// Why the reminders stopped: the company is gone from the register, or it
+// is bankrupt and the trustee has taken over its obligations
+export type StopReason = "deleted" | "bankrupt";
+
 const STOPPED = {
   nb: {
     subject: (c: CompanyLine) => `Påminnelsene for ${c.companyName} er stoppet`,
-    intro: (c: CompanyLine) =>
-      `${c.companyName} (${c.orgNumber}) står ikke lenger som aktiv i Enhetsregisteret, så Regelvakt sender ingen flere påminnelser for den. E-postadressen din er slettet hos oss.`,
+    intro: {
+      deleted: (c: CompanyLine) =>
+        `${c.companyName} (${c.orgNumber}) står ikke lenger som aktiv i Enhetsregisteret, så Regelvakt sender ingen flere påminnelser for den.`,
+      bankrupt: (c: CompanyLine) =>
+        `Enhetsregisteret viser at ${c.companyName} (${c.orgNumber}) er konkurs. Da er det bostyreren som har ansvaret for de fleste pliktene, så Regelvakt sender ingen flere påminnelser for den.`,
+    },
+    deleted: "E-postadressen din er slettet hos oss.",
     action:
       "Har virksomheten fått et nytt organisasjonsnummer, kan du lage en ny vurdering:",
     button: "Lag en ny vurdering",
   },
   en: {
     subject: (c: CompanyLine) => `Reminders for ${c.companyName} have stopped`,
-    intro: (c: CompanyLine) =>
-      `${c.companyName} (${c.orgNumber}) is no longer listed as active in the Central Coordinating Register, so Regelvakt will send no more reminders for it. Your email address has been deleted.`,
+    intro: {
+      deleted: (c: CompanyLine) =>
+        `${c.companyName} (${c.orgNumber}) is no longer listed as active in the Central Coordinating Register, so Regelvakt will send no more reminders for it.`,
+      bankrupt: (c: CompanyLine) =>
+        `The Central Coordinating Register shows that ${c.companyName} (${c.orgNumber}) is bankrupt. The trustee in bankruptcy is then responsible for most obligations, so Regelvakt will send no more reminders for it.`,
+    },
+    deleted: "Your email address has been deleted.",
     action:
       "If the business has a new organization number, you can make a new assessment:",
     button: "Make a new assessment",
@@ -339,11 +353,15 @@ export function remindersStoppedEmail(input: {
   to: string;
   language: EmailLanguage;
   company: CompanyLine;
+  reason: StopReason;
   startUrl: string;
 }): Email {
   const t = STOPPED[input.language];
   return email(input.to, t.subject(input.company), {
-    paragraphs: [t.intro(input.company), t.action],
+    paragraphs: [
+      `${t.intro[input.reason](input.company)} ${t.deleted}`,
+      t.action,
+    ],
     button: { text: t.button, url: input.startUrl },
     footer: [DISCLAIMER[input.language]],
   });
