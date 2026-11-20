@@ -194,7 +194,11 @@ docker compose -f docker-compose.prod.yml ps     # all three "healthy"
 | `CLIENT_IP_HEADER`                               | empty (`cf-connecting-ip` is used)                                    | the same                           |
 | `WEB_APP_URL`                                    | `https://regelvakt.devrimdev.no`                                      | the staging address                |
 | `EMAIL_PROVIDER`, `RESEND_API_KEY`, `EMAIL_FROM` | `resend`, a key of its own, an address on a domain verified in Resend | `log`: no real emails from staging |
-| `AI_PROVIDER`, `GEMINI_API_KEY`, `GEMINI_MODEL`  | `gemini` with a paid key (the free tier may use the questions)        | the same, or empty to turn it off  |
+| `AI_PROVIDER`, `GEMINI_API_KEY`, `GEMINI_MODEL`  | `gemini`, `gemini-3.6-flash` (see the answer quality table)           | the same, or empty to turn it off  |
+| `GEMINI_THINKING_LEVEL`                          | `low`: answers from the sources need little reasoning                 | the same                           |
+| `GEMINI_FREE_TIER`                               | `true` while the key is on the free tier (the pilot)                  | the same                           |
+| `ASSISTANT_SEARCH_TERMS`                         | `off` on the free tier: one request per question instead of two       | the same                           |
+| `ASSISTANT_DAILY_LIMIT`                          | what the quota allows: 20 on the free tier with search terms off      | the same                           |
 | `GOATCOUNTER_URL`                                | the counter's `/count` address                                        | empty                              |
 
 `DB_HOST`, `DB_PORT` and `PORT` are set by the Compose file. `API_PORT` is not used on a server.
@@ -310,7 +314,9 @@ All four misses with `gemma4:12b` were missing sources, not search: the annual a
 | --- | --- | --- |
 | `gemma4:12b`, local, thinking on | 8–9 / 10 | about 3 minutes |
 | `gemma4:12b`, local, thinking off | 10 / 10 (100 %) | under half a minute |
-| `gemma4:12b`, local, with the question about the next deadline (11 questions) | not run yet | |
+| `gemma4:12b`, local, with the question about the next deadline (11 questions) | 11 / 11 (100 %) | |
+| `gemini-4-hydrogen`, thinking level `low` (11 questions) | not measured: 503 "high demand", then no answer within 60 seconds | |
+| `gemini-3.6-flash`, thinking level `low`, free tier (11 questions) | 10 / 11; the eleventh hit the free tier's 20 requests a day | 5.5 minutes |
 
 With thinking on, one question in each run came back empty, a different one each time. Ollama's own figures for it: a prompt of 2,707 tokens, then 5,482 tokens of "thinking" until the context window of 8,192 was full, and a stop for length before any answer was written. The assistant only reads the sources it is given and writes a few sentences, with the dates already worked out in [1], so the model is now asked not to think: no empty answers, the same answers otherwise, about seven times faster. An empty answer from Ollama is logged with those figures, and the assistant logs when it falls back to the sources because of one.
 
@@ -427,6 +433,12 @@ The first real question, "Når må jeg levere mva-meldingen?", got an answer tha
 - Privacy page, and end-to-end tests (26, Playwright) through the whole web app with accessibility checks in light and dark mode, against the real API with stand-ins for Brreg and the language model; the API's Brreg address is now a setting (`BRREG_API_URL`)
 - Running on a server: `docker-compose.prod.yml` (only the web app on 127.0.0.1, for Cloudflare Tunnel), nightly backups with `scripts/backup-db.sh` and restoring with `scripts/restore-db.sh`; CI checks the server's Compose file
 - Page views counted with GoatCounter when `GOATCOUNTER_URL` is set: no cookies, the path only, with an assessment's id and the organization number taken out; the privacy page says so. The end-to-end tests now fail on anything the content security policy blocks
+- Gemini's thinking level is a setting (`GEMINI_THINKING_LEVEL`, `low` in the examples): `gemini-4-hydrogen` thinks at its highest level unless told otherwise, which makes answers slower and costs tokens. An empty answer from Gemini is logged with the reason, as for Ollama
+- Gemini tried again: the first run of `npm run eval:answers` with `gemini-4-hydrogen` got 503 "high demand" on several questions. A 500-504 answer or a lost connection is now tried twice more, 2 and 5 seconds apart, within `AI_TIMEOUT_SECONDS`; a used-up quota (429) is not, since a few seconds do not change it
+- Gemini model: `gemini-4-hydrogen` (out on 12 November) answered 503 "high demand" and then nothing for 60 seconds, twice, on the free tier; `gemini-3.6-flash`, the model Leverandørvakt uses, answered in 17 seconds with the right VAT deadlines, and 10 of 11 in `npm run eval:answers` until the free tier's 20 requests a day ran out
+- The pilot runs on Gemini's free tier, until the cost of the whole is worked out: `GEMINI_FREE_TIER=true` tells the users on the assistant and the privacy page that Google may use the questions and that only a few are answered a day; an answer with the sources only now says why (`reason`: no model, the quota used up, the model failed), and the page says it in words; `ASSISTANT_SEARCH_TERMS=off` asks the model once per question instead of twice
+- One question takes at most `AI_TIMEOUT_SECONDS` in all: the search terms get a third of it, the answer the rest. Before, each request had the whole limit, and a question on the busy Hydrogen took 120 seconds
+- Without the model, the answer gave only excerpts, and for "Når må jeg levere mva-meldingen?" the excerpts found held only the annual term's 10 March, not the two-month deadlines most businesses have. On the free tier that answer is common, so it now also gives the deadlines in Regelvakt's rules for the obligations the question names (or whose page was found first), with an assessment the company's own next dates; a question about an obligation the company does not have gets none. Tests found that "mva-melding" ends in "a-melding", which the matching now tells apart
 
 ## Disclaimer
 

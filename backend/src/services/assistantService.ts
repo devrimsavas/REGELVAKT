@@ -4,13 +4,16 @@
 // 1. The language model turns the question into Norwegian search terms, so
 //    a question in English or in everyday words ("KDV", "skatt på salg")
 //    still finds the official wording ("mva", "merverdiavgift").
+//    ASSISTANT_SEARCH_TERMS=off searches the question itself instead: one
+//    request to the model per question instead of two, for a small quota.
 // 2. Full-text search finds the most relevant sections.
 // 3. The model answers only from its sources and marks each claim with the
 //    number of its source. Source [1] is always Regelvakt's own rules (see
 //    rulesSource.ts): the dates come from there, the explanations from the
 //    official pages, [2] onwards.
 // Without a language model (none set up, or it fails), the answer is the
-// most relevant sections themselves, with their links.
+// most relevant sections themselves, with their links, and the reason.
+// The whole question takes at most AI_TIMEOUT_SECONDS: the steps share it.
 
 import { createHash } from "node:crypto";
 import { logger } from "../config/logger.js";
@@ -18,8 +21,8 @@ import { type SearchHit, search } from "../knowledge/search.js";
 import type { EmailLanguage } from "../models/Subscription.js";
 import type { Company } from "../types/company.js";
 import { createLlmProvider } from "./llm/llmProvider.js";
-import type { LlmProvider } from "./llm/types.js";
-import type { RulesSource } from "./rulesSource.js";
+import { type LlmProvider, LlmQuotaError } from "./llm/types.js";
+import type { RulesDeadlines, RulesSource } from "./rulesSource.js";
 
 const log = logger.child({ module: "assistant" });
 
@@ -41,6 +44,17 @@ export interface Source {
   cited: boolean;
 }
 
+// Why an answer holds the sources only: no language model is set up, the
+// model's quota for the day is used up, or the model failed (busy, too
+// slow, an error)
+export type FallbackReason = "noModel" | "modelQuota" | "modelFailed";
+
+// An obligation's deadlines from Regelvakt's rules, shown as they are
+export interface Deadlines {
+  title: string;
+  text: string;
+}
+
 export interface AssistantAnswer {
   // "answer": written by the language model; "sources": the most relevant
   // sections only, because no model is set up or it could not answer
@@ -48,6 +62,13 @@ export interface AssistantAnswer {
   answer: string | null;
   sources: Source[];
   disclaimer: string;
+  // With "sources": why; null with "answer"
+  reason: FallbackReason | null;
+  // With "sources": the deadlines in Regelvakt's rules for the obligations
+  // the question is about, since the excerpts may not hold them (a VAT
+  // question can find only the annual term's 10 March). Empty with "answer",
+  // where they are in the text.
+  deadlines: Deadlines[];
 }
 
 // The company the question is about, from an assessment, to rank the
@@ -112,9 +133,18 @@ Gjør spørsmålet om til 2–6 korte søkeuttrykk på norsk bokmål, med de ord
 Ta ikke med navn, tall eller andre personopplysninger fra spørsmålet.
 Svar bare med JSON: {"terms": ["...", "..."]}`;
 
+// The search terms may take at most this share of the question's time,
+// so the answer always has the most of it
+const TERMS_SHARE_OF_TIME = 1 / 3;
+
+export function searchTermsEnabled(): boolean {
+  return process.env.ASSISTANT_SEARCH_TERMS?.trim().toLowerCase() !== "off";
+}
+
 export async function searchTerms(
   question: string,
   provider: LlmProvider | null,
+  timeoutMs?: number,
 ): Promise<string[]> {
   if (!provider) return [question];
   try {
@@ -124,6 +154,7 @@ export async function searchTerms(
         { role: "user", content: question },
       ],
       json: true,
+      ...(timeoutMs === undefined ? {} : { timeoutMs }),
     });
     const parsed: unknown = JSON.parse(raw);
     const terms =
@@ -245,6 +276,59 @@ function rulesSourceItem(rules: RulesSource, cited: Set<number>): Source {
   };
 }
 
+// ---- Deadlines without the model ----
+
+// The words that name each obligation, in Norwegian and English. Matched
+// against the question with its letters in lower case.
+const OBLIGATION_WORDS: Record<string, RegExp> = {
+  "vat-return": /\bmva\b|mva-|merverdiavgift|\bvat\b/,
+  // Not the end of "mva-melding"
+  "a-melding": /(^|[^a-zæøå])a-melding/,
+  "employer-contribution":
+    /arbeidsgiveravgift|forskuddstrekk|employer'?s contribution|withholding tax/,
+  "tax-return-enk": /skattemelding|tax return/,
+  "tax-return-company": /skattemelding|tax return/,
+  "advance-tax-enk": /forskuddsskatt|forskotsskatt|advance tax/,
+  "advance-tax-company": /forskuddsskatt|forskotsskatt|advance tax/,
+  "shareholder-register": /aksjonærregister|shareholder register/,
+  "general-meeting": /generalforsamling|general meeting/,
+  "annual-accounts": /årsregnskap|annual accounts/,
+  bookkeeping: /bokføring|bookkeeping|kvittering|receipt|bilag/,
+};
+
+// At most this many obligations, so the deadlines stay readable
+const DEADLINES_SHOWN = 3;
+// When the question names none, the obligations of the first sections
+// found: further down they are less likely to be what was asked about
+const HITS_FOR_DEADLINES = 2;
+
+// The deadlines for the obligations the question is about: the ones it
+// names, or else the ones whose page the search found first. None when it
+// is about something else, or names only obligations the company does not
+// have.
+export function relevantDeadlines(
+  question: string,
+  hits: SearchHit[],
+  obligations: RulesDeadlines[],
+): Deadlines[] {
+  const text = question.toLowerCase();
+  const named = Object.keys(OBLIGATION_WORDS).filter((id) =>
+    OBLIGATION_WORDS[id]?.test(text),
+  );
+  let matched = obligations.filter((obligation) =>
+    named.includes(obligation.id),
+  );
+  if (named.length === 0) {
+    const urls = hits.slice(0, HITS_FOR_DEADLINES).map((hit) => hit.url);
+    matched = obligations.filter((obligation) =>
+      urls.includes(obligation.sourceUrl),
+    );
+  }
+  return matched
+    .slice(0, DEADLINES_SHOWN)
+    .map(({ title, text }) => ({ title, text }));
+}
+
 // ---- All of it ----
 
 export interface Question {
@@ -258,8 +342,17 @@ export interface Question {
 export async function ask(input: Question): Promise<AssistantAnswer> {
   const t = TEXT[input.language];
   const provider = createLlmProvider();
+  // When the answer must be ready, whatever the steps before it took
+  const deadline = Date.now() + (provider?.timeoutMs ?? 0);
 
-  const terms = await searchTerms(input.question, provider);
+  const terms =
+    provider && searchTermsEnabled()
+      ? await searchTerms(
+          input.question,
+          provider,
+          provider.timeoutMs * TERMS_SHARE_OF_TIME,
+        )
+      : [input.question];
   const hits = await search(terms, {
     limit: SOURCES_PER_ANSWER,
     boost: input.context
@@ -274,12 +367,19 @@ export async function ask(input: Question): Promise<AssistantAnswer> {
       answer: t.notFound,
       sources: [],
       disclaimer: t.disclaimer[mode],
+      reason: provider ? null : "noModel",
+      deadlines: provider
+        ? []
+        : relevantDeadlines(input.question, [], input.rules.obligations),
     };
   }
 
+  let reason: FallbackReason = "noModel";
   if (provider) {
+    reason = "modelFailed";
     try {
       const raw = await provider.chat({
+        timeoutMs: deadline - Date.now(),
         messages: [
           {
             role: "system",
@@ -303,6 +403,8 @@ export async function ask(input: Question): Promise<AssistantAnswer> {
             ...pageSources(hits, cited, 2),
           ],
           disclaimer: t.disclaimer.answer,
+          reason: null,
+          deadlines: [],
         };
       }
       // The question is not logged; the length tells an empty answer from
@@ -312,11 +414,20 @@ export async function ask(input: Question): Promise<AssistantAnswer> {
         "The language model gave an empty answer; showing the sources",
       );
     } catch (error: unknown) {
-      // The question itself is not logged: it may hold personal details
-      log.error(
-        { err: error, provider: provider.name },
-        "The language model could not answer; showing the sources",
-      );
+      if (error instanceof LlmQuotaError) {
+        // Expected on a free tier: a warning, not an error
+        reason = "modelQuota";
+        log.warn(
+          { err: error, provider: provider.name },
+          "The language model's quota is used up; showing the sources",
+        );
+      } else {
+        // The question itself is not logged: it may hold personal details
+        log.error(
+          { err: error, provider: provider.name },
+          "The language model could not answer; showing the sources",
+        );
+      }
     }
   }
 
@@ -325,6 +436,8 @@ export async function ask(input: Question): Promise<AssistantAnswer> {
     answer: null,
     sources: pageSources(hits, new Set(), 1),
     disclaimer: t.disclaimer.sources,
+    reason,
+    deadlines: relevantDeadlines(input.question, hits, input.rules.obligations),
   };
 }
 

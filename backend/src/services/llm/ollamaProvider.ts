@@ -3,9 +3,11 @@ import { logger } from "../../config/logger.js";
 import {
   type ChatRequest,
   type LlmProvider,
+  LlmQuotaError,
   LlmResponseError,
   LlmTimeoutError,
   LlmUnavailableError,
+  requestTimeoutMs,
 } from "./types.js";
 
 export const OLLAMA_CONTEXT_TOKENS = 8192;
@@ -23,28 +25,34 @@ export interface OllamaConfig {
 // the cloud only needs an API key.
 export class OllamaProvider implements LlmProvider {
   readonly name: string;
-  private readonly client: Ollama;
+  readonly timeoutMs: number;
 
   constructor(private readonly config: OllamaConfig) {
     this.name = `ollama:${config.model}`;
-    this.client = new Ollama({
-      host: config.host,
-      ...(config.apiKey
-        ? { headers: { Authorization: `Bearer ${config.apiKey}` } }
+    this.timeoutMs = config.timeoutMs;
+  }
+
+  // A client whose requests stop after timeoutMs. One per request, since
+  // each request can have its own limit; making one costs nothing.
+  private client(timeoutMs: number): Ollama {
+    return new Ollama({
+      host: this.config.host,
+      ...(this.config.apiKey
+        ? { headers: { Authorization: `Bearer ${this.config.apiKey}` } }
         : {}),
-      // Every request gets the time limit. The global fetch is looked up on
-      // each call, so tests can replace it.
+      // The global fetch is looked up on each call, so tests can replace it
       fetch: (input, init) =>
         globalThis.fetch(input, {
           ...init,
-          signal: AbortSignal.timeout(config.timeoutMs),
+          signal: AbortSignal.timeout(timeoutMs),
         }),
     });
   }
 
   async chat(request: ChatRequest): Promise<string> {
+    const timeoutMs = requestTimeoutMs(request, this.config.timeoutMs);
     try {
-      const response = await this.client.chat({
+      const response = await this.client(timeoutMs).chat({
         model: this.config.model,
         messages: request.messages,
         ...(request.json ? { format: "json" } : {}),
@@ -76,15 +84,19 @@ export class OllamaProvider implements LlmProvider {
       }
       return response.message.content ?? "";
     } catch (error: unknown) {
-      throw toLlmError(error, this.config);
+      throw toLlmError(error, this.config, timeoutMs);
     }
   }
 }
 
-function toLlmError(error: unknown, config: OllamaConfig): Error {
+function toLlmError(
+  error: unknown,
+  config: OllamaConfig,
+  timeoutMs: number,
+): Error {
   if (error instanceof Error && error.name === "TimeoutError") {
     return new LlmTimeoutError(
-      `Ollama did not answer within ${config.timeoutMs / 1000} seconds`,
+      `Ollama did not answer within ${Math.round(timeoutMs / 1000)} seconds`,
     );
   }
   // The ollama library throws a ResponseError with the HTTP status
@@ -93,6 +105,10 @@ function toLlmError(error: unknown, config: OllamaConfig): Error {
     "status_code" in error &&
     typeof error.status_code === "number"
   ) {
+    // Ollama Cloud's limits used up
+    if (error.status_code === 429) {
+      return new LlmQuotaError(`Ollama answered 429: ${error.message}`);
+    }
     const hint =
       error.status_code === 404
         ? ` Is the model "${config.model}" pulled? Run: ollama pull ${config.model}`

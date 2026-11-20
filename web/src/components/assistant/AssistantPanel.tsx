@@ -14,6 +14,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { type FormEvent, useId, useState, useTransition } from "react";
 import {
   type AssistantAnswer,
+  excerptsMessage,
   linkCitations,
   MAX_QUESTION,
   MIN_QUESTION,
@@ -45,10 +46,13 @@ const COMPANY_EXAMPLES = [
 export function AssistantPanel({
   assessmentId = null,
   noModel,
+  freeTier = false,
 }: {
   assessmentId?: string | null;
   // No language model: the answers are excerpts only
   noModel: boolean;
+  // The model is used on a free tier, which the users are told
+  freeTier?: boolean;
 }) {
   const t = useTranslations("assistant");
   const errors = useTranslations("apiErrors");
@@ -115,6 +119,11 @@ export function AssistantPanel({
           <Paragraph>{t("noModel")}</Paragraph>
         </Alert>
       )}
+      {freeTier && (
+        <Alert data-color="info">
+          <Paragraph>{t("freeTier")}</Paragraph>
+        </Alert>
+      )}
 
       {entries.length > 0 && (
         <ol className={styles.entries} aria-label={t("answer")}>
@@ -134,7 +143,26 @@ export function AssistantPanel({
                     text={linkCitations(entry.answer.answer, entry.id)}
                   />
                 ) : (
-                  <Paragraph>{t("excerptsOnly")}</Paragraph>
+                  <>
+                    <Paragraph>
+                      {t(excerptsMessage(entry.answer.reason))}
+                    </Paragraph>
+                    {entry.answer.deadlines.length > 0 && (
+                      <div className={styles.deadlines}>
+                        <Heading level={3} data-size="2xs">
+                          {t("rulesDeadlines")}
+                        </Heading>
+                        <ul>
+                          {entry.answer.deadlines.map((deadline) => (
+                            <li key={deadline.title}>
+                              <strong>{deadline.title}:</strong>{" "}
+                              {deadline.text}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </>
                 )}
                 {entry.answer.sources.length > 0 && (
                   <>

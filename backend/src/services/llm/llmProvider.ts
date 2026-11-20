@@ -11,7 +11,8 @@ let override: LlmProvider | null | undefined;
 // official pages only. Read on every call, so tests can set their own.
 //
 // AI_PROVIDER=ollama   OLLAMA_HOST, OLLAMA_MODEL, OLLAMA_API_KEY (cloud only)
-// AI_PROVIDER=gemini   GEMINI_API_KEY, GEMINI_MODEL
+// AI_PROVIDER=gemini   GEMINI_API_KEY, GEMINI_MODEL, GEMINI_THINKING_LEVEL,
+//                      GEMINI_FREE_TIER
 export function createLlmProvider(): LlmProvider | null {
   if (override !== undefined) return override;
 
@@ -37,10 +38,22 @@ export function createLlmProvider(): LlmProvider | null {
         apiKey: env.GEMINI_API_KEY,
         model: env.GEMINI_MODEL,
         timeoutMs,
+        thinkingLevel: env.GEMINI_THINKING_LEVEL?.trim().toLowerCase() || null,
       });
     default:
       return null;
   }
+}
+
+// Whether the language model is used on a free tier that lets the provider
+// use the questions (GEMINI_FREE_TIER=true with Gemini), so the web app
+// can tell the users
+export function modelOnFreeTier(): boolean {
+  const provider = createLlmProvider();
+  return (
+    provider?.name.startsWith("gemini:") === true &&
+    process.env.GEMINI_FREE_TIER?.trim().toLowerCase() === "true"
+  );
 }
 
 // For tests: use this provider (null: none). undefined puts back the

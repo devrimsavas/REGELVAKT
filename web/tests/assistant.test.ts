@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { linkCitations, sourceAnchor } from "@/lib/assistant";
+import { excerptsMessage, linkCitations, sourceAnchor } from "@/lib/assistant";
 
 const apiFetch = vi.fn();
 vi.mock("@/lib/api", () => ({ apiFetch }));
@@ -77,5 +77,14 @@ describe("asking the assistant", () => {
       ok: false,
       error: { key: "notReady" },
     });
+  });
+});
+
+describe("an answer with the sources only", () => {
+  it("says why the language model did not answer", () => {
+    expect(excerptsMessage("modelQuota")).toBe("excerptsQuota");
+    expect(excerptsMessage("modelFailed")).toBe("excerptsFailed");
+    expect(excerptsMessage("noModel")).toBe("excerptsOnly");
+    expect(excerptsMessage(null)).toBe("excerptsOnly");
   });
 });

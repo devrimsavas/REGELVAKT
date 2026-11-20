@@ -24,12 +24,30 @@ export interface AssistantAnswer {
   answer: string | null;
   sources: Source[];
   disclaimer: string;
+  // With "sources", why: no model set up, the model's quota for the day
+  // used up, or the model failed this time. Null with "answer".
+  reason: "noModel" | "modelQuota" | "modelFailed" | null;
+  // With "sources": the deadlines in Regelvakt's rules for what the
+  // question is about. Empty with "answer".
+  deadlines: { title: string; text: string }[];
 }
 
 export interface AssistantStatus {
   ready: boolean;
   knowledgeBase: { pages: number; sections: number; updatedAt: string | null };
   model: string | null;
+  // The model is used on a free tier: the provider may use the questions,
+  // and only a few are answered a day
+  freeTier: boolean;
+}
+
+// What the page says when an answer holds the sources only
+export function excerptsMessage(
+  reason: AssistantAnswer["reason"],
+): "excerptsQuota" | "excerptsFailed" | "excerptsOnly" {
+  if (reason === "modelQuota") return "excerptsQuota";
+  if (reason === "modelFailed") return "excerptsFailed";
+  return "excerptsOnly";
 }
 
 // The page id of a source in one answer; answers on the same page each

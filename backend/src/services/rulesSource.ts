@@ -25,6 +25,16 @@ import { RULES_VERSION } from "../rules/version.js";
 import type { Company } from "../types/company.js";
 import { webAppUrl } from "../utils/webAppUrl.js";
 
+// One obligation's deadlines in the user's language, shown as they are
+// when no language model answers
+export interface RulesDeadlines {
+  id: string;
+  title: string;
+  // The company's next dates, or every deadline that can apply
+  text: string;
+  sourceUrl: string;
+}
+
 export interface RulesSource {
   title: string;
   heading: string;
@@ -33,6 +43,8 @@ export interface RulesSource {
   excerpt: string;
   // What the model is given
   text: string;
+  // The same deadlines per obligation, for an answer without the model
+  obligations: RulesDeadlines[];
 }
 
 const MONTHS_NB = [
@@ -66,6 +78,30 @@ export function formatDateNb(isoDate: IsoDate): string {
   return `${day}. ${MONTHS_NB[(month ?? 1) - 1]} ${year}`;
 }
 
+const MONTHS_EN = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+// 2026-12-10 -> "10 December 2026"
+export function formatDateEn(isoDate: IsoDate): string {
+  const [year, month, day] = isoDate.split("-").map(Number);
+  return `${day} ${MONTHS_EN[(month ?? 1) - 1]} ${year}`;
+}
+
+// How many of a company's next dates an answer without the model shows
+const DATES_SHOWN = 3;
+
 // A deadline, with the date it was moved from when the rules moved it:
 // "2. august 2027 (flyttet fra lørdag 31. juli)". Without that, the model
 // took a moved date and the pages' own date for a contradiction.
@@ -90,6 +126,8 @@ const TEXT = {
     title: "Regelvakt",
     generalHeading: "Pliktene og fristene i Regelvakts regler",
     companyHeading: "Pliktene og fristene for dette foretaket",
+    nextDates: (dates: string[]) => `De neste fristene: ${dates.join(", ")}.`,
+    formatDate: formatDateNb,
     generalExcerpt: `Fristene i Regelvakts regler (versjon ${RULES_VERSION}), kontrollert mot de offisielle sidene.`,
     companyExcerpt: (count: number) =>
       `Fristene Regelvakt har regnet ut for foretaket: ${count} plikter (regler versjon ${RULES_VERSION}).`,
@@ -98,6 +136,8 @@ const TEXT = {
     title: "Regelvakt",
     generalHeading: "The obligations and deadlines in Regelvakt's rules",
     companyHeading: "The obligations and deadlines for this business",
+    nextDates: (dates: string[]) => `The next deadlines: ${dates.join(", ")}.`,
+    formatDate: formatDateEn,
     generalExcerpt: `The deadlines in Regelvakt's rules (version ${RULES_VERSION}), checked against the official pages.`,
     companyExcerpt: (count: number) =>
       `The deadlines Regelvakt has worked out for the business: ${count} obligations (rules version ${RULES_VERSION}).`,
@@ -125,6 +165,12 @@ export function generalRulesSource(language: EmailLanguage): RulesSource {
       "Reglene gjelder enkeltpersonforetak (ENK) og aksjeselskap (AS).",
       ...blocks,
     ].join("\n\n"),
+    obligations: OBLIGATIONS.map((obligation) => ({
+      id: obligation.id,
+      title: obligation.title[language],
+      text: obligation.deadlineText[language],
+      sourceUrl: obligation.sourceUrl,
+    })),
   };
 }
 
@@ -200,8 +246,8 @@ export function companyRulesSource(
   if (companyFacts === null || !result.supported)
     return generalRulesSource(language);
   const facts = toFacts(companyFacts, assessment.answers);
-
   const t = TEXT[language];
+
   const form =
     company.organizationForm === "ENK"
       ? "Enkeltpersonforetak (ENK)"
@@ -213,10 +259,24 @@ export function companyRulesSource(
   // The company's own dates when the rules know them. Otherwise the
   // general text: every deadline that can apply (the VAT return before the
   // term is known), or that there is no fixed one (bookkeeping).
+  const obligations: RulesDeadlines[] = [];
   const blocks = result.obligations.map((obligation) => {
     const definition = OBLIGATIONS.find((d) => d.id === obligation.id);
     const schedule = definition?.schedule(facts) ?? null;
     const details = schedule ? upcomingDeadlineDetails(schedule, today) : [];
+    obligations.push({
+      id: obligation.id,
+      title: obligation.title[language],
+      text:
+        details.length > 0
+          ? t.nextDates(
+              details
+                .slice(0, DATES_SHOWN)
+                .map((detail) => t.formatDate(detail.date)),
+            )
+          : (definition?.deadlineText[language] ?? ""),
+      sourceUrl: obligation.sourceUrl,
+    });
     const deadlines =
       details.length > 0
         ? `Fristene de neste tolv månedene: ${details.map(formatDeadlineNb).join(", ")}.`
@@ -246,5 +306,6 @@ export function companyRulesSource(
       ...nextDeadlinesLine(result.obligations),
       ...blocks,
     ].join("\n\n"),
+    obligations,
   };
 }

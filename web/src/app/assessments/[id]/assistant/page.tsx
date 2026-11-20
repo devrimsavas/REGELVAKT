@@ -40,6 +40,7 @@ export default async function CompanyAssistantPage({
         <AssistantPanel
           assessmentId={id}
           noModel={status.ok && status.data.model === null}
+          freeTier={status.ok && status.data.freeTier}
         />
       )}
     </section>

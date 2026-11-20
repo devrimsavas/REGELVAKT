@@ -1,7 +1,8 @@
 // A stand-in for Ollama in the end-to-end tests. It answers the two calls
 // the assistant makes: the search terms (JSON), and the answer, which
 // quotes the first deadline the rules source gives, so a test can tell
-// that the company's rules reached the model.
+// that the company's rules reached the model. A question about "kvote"
+// gets the answer of a used-up quota.
 import http from "node:http";
 
 const PORT = Number(process.env.PORT || 4011);
@@ -31,6 +32,13 @@ http
       }
       const request = JSON.parse(body || "{}");
       const prompt = request.messages?.at(-1)?.content ?? "";
+      // A question with "kvote" in it: the model's quota is used up, as
+      // Ollama Cloud answers then
+      if (request.format !== "json" && /kvote/i.test(prompt)) {
+        res.writeHead(429, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "usage limit reached" }));
+        return;
+      }
       const content =
         request.format === "json"
           ? JSON.stringify({ terms: ["mva-melding", "frist"] })

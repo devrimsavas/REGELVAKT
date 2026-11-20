@@ -164,3 +164,15 @@
   font-size: 1.5em;
   color: var(--ds-color-accent-text-subtle);
 }
+
+/* The deadlines in Regelvakt's rules, when no language model answered */
+.deadlines {
+  padding: var(--ds-size-3) var(--ds-size-4);
+  border-radius: var(--ds-border-radius-md);
+  background: var(--ds-color-accent-surface-tinted);
+}
+
+.deadlines ul {
+  margin: var(--ds-size-2) 0 0;
+  padding-left: var(--ds-size-5);
+}

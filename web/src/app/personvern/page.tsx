@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import NextLink from "next/link";
 import { getTranslations } from "next-intl/server";
 import { counterUrl } from "@/lib/analytics";
+import { getAssistantStatus } from "@/lib/data";
 import { SITE } from "@/lib/site";
 import styles from "../om/about.module.css";
 import pages from "../pages.module.css";
@@ -32,6 +33,10 @@ export default async function PrivacyPage() {
   const sections = SECTIONS.filter(
     (section) => section !== "counting" || counting,
   );
+  // Where the assistant's model is on a free tier, what that means for
+  // the questions. If the API cannot be asked, the general text stands.
+  const status = await getAssistantStatus();
+  const freeTier = status.ok && status.data.freeTier;
 
   return (
     <article className={`container ${pages.page}`}>
@@ -52,6 +57,9 @@ export default async function PrivacyPage() {
             {t(`${section}Title`)}
           </Heading>
           <Paragraph>{t(section)}</Paragraph>
+          {section === "assistant" && freeTier && (
+            <Paragraph>{t("assistantFreeTier")}</Paragraph>
+          )}
         </section>
       ))}
 

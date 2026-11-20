@@ -11,7 +11,10 @@ import {
   companyContext,
   DailyLimitError,
 } from "../services/assistantService.js";
-import { createLlmProvider } from "../services/llm/llmProvider.js";
+import {
+  createLlmProvider,
+  modelOnFreeTier,
+} from "../services/llm/llmProvider.js";
 import {
   companyRulesSource,
   generalRulesSource,
@@ -27,7 +30,7 @@ const MAX_QUESTION = 500;
 export const askAssistant = async (req: Request, res: Response) => {
   // #swagger.tags = ["Assistant"]
   // #swagger.summary = "Ask a question about obligations; answered from official pages with numbered sources"
-  /* #swagger.description = "language is nb (default) or en. Source 1 (kind 'rules') is Regelvakt's own rules: with assessmentId, the obligations and next deadlines of that company, and the sources that fit it rank higher; without, every obligation with who it applies to and its deadlines. The other sources (kind 'page') are sections of official pages. mode is 'answer' when a language model wrote the answer, 'sources' when only the most relevant official sections are given (no model set up, or it could not answer). The question is not stored. Do not write personal details in it: it is sent to the language model." */
+  /* #swagger.description = "language is nb (default) or en. Source 1 (kind 'rules') is Regelvakt's own rules: with assessmentId, the obligations and next deadlines of that company, and the sources that fit it rank higher; without, every obligation with who it applies to and its deadlines. The other sources (kind 'page') are sections of official pages. mode is 'answer' when a language model wrote the answer, 'sources' when only the most relevant official sections are given, with reason: 'noModel' (none set up), 'modelQuota' (the model's quota for the day is used up) or 'modelFailed' (busy, too slow or an error); reason is null with 'answer'. With 'sources', deadlines holds the deadlines in Regelvakt's rules for the obligations the question names (or whose page was found first), with an assessment that company's next dates; it is empty with 'answer', where the dates are in the text. The question is not stored. Do not write personal details in it: it is sent to the language model." */
   /* #swagger.requestBody = {
        required: true,
        content: {
@@ -119,5 +122,8 @@ export const getAssistantStatus = async (_req: Request, res: Response) => {
     knowledgeBase: { pages, sections, updatedAt },
     // null: no language model; the assistant gives the sources only
     model: provider?.name ?? null,
+    // The model is used on a free tier: the provider may use the questions
+    // to improve its products, and only a few questions a day are answered
+    freeTier: modelOnFreeTier(),
   });
 };

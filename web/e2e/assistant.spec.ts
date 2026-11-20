@@ -29,6 +29,22 @@ test.describe("the assistant", () => {
     expect(new URL(page.url()).hash).toMatch(/-source-2$/);
   });
 
+  test("says when the language model's quota is used up, and gives the sources", async ({ page }) => {
+    await page.goto("/assistent");
+    const field = page.getByLabel("Spørsmålet ditt");
+    // The stand-in model has no quota left for questions about "kvote"
+    await field.fill("Når må mva-meldingen leveres? (kvote)");
+    await field.press("Enter");
+
+    const answer = page.locator("li", { hasText: "Du spurte" });
+    await expect(answer.getByText("Assistenten har brukt opp dagens spørsmål til språkmodellen.")).toBeVisible();
+    // The deadlines come from the rules, not only from the excerpts found
+    await expect(answer.getByRole("heading", { name: "Fristene i Regelvakts regler" })).toBeVisible();
+    await expect(answer.getByRole("listitem").filter({ hasText: "Mva-melding:" })).toContainText("januar–februar innen 10. april");
+    await expect(answer.getByRole("heading", { name: "Kilder" })).toBeVisible();
+    await expect(answer.getByText("Brukt i svaret")).toHaveCount(0);
+  });
+
   test("answers for the business with its own next deadline", async ({ page }) => {
     const path = await createAssessment(page, AS, {
       vatTerm: "Annenhver måned",

@@ -35,8 +35,22 @@ OLLAMA_MODEL=gemma4:12b
 OLLAMA_API_KEY=
 GEMINI_API_KEY=
 GEMINI_MODEL=
-# Questions per day for everybody together: a ceiling on the model's cost
+# How much Gemini thinks before it answers: "low" is fast and cheap and
+# enough for answers from the sources; empty leaves the model's default
+# (for some models the highest)
+GEMINI_THINKING_LEVEL=low
+# true when the key is on Gemini's free tier: Google may then use the
+# questions to improve its products, and the web app tells the users so.
+# Empty or false with billing turned on.
+GEMINI_FREE_TIER=
+# Questions per day for everybody together: a ceiling on the model's cost.
+# On Gemini's free tier, what the quota allows: 20 with search terms off,
+# 10 with them on
 ASSISTANT_DAILY_LIMIT=500
+# "off": search with the question itself instead of asking the model for
+# search terms first; one request to the model per question instead of
+# two, for a small quota (the free tier: 20 requests a day per model)
+ASSISTANT_SEARCH_TERMS=
 # Milliseconds between two requests to the same site when the knowledge
 # base is read (be polite: keep it at 1000 or more)
 CRAWL_DELAY_MS=1000

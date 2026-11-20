@@ -28,7 +28,10 @@ export default async function AssistantPage() {
           <Paragraph>{t("notReady")}</Paragraph>
         </Alert>
       ) : (
-        <AssistantPanel noModel={status.ok && status.data.model === null} />
+        <AssistantPanel
+          noModel={status.ok && status.data.model === null}
+          freeTier={status.ok && status.data.freeTier}
+        />
       )}
     </div>
   );

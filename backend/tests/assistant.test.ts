@@ -3,7 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import app from "../src/app.js";
 import { KnowledgeChunk } from "../src/models/KnowledgeChunk.js";
 import { KnowledgePage } from "../src/models/KnowledgePage.js";
-import { citedNumbers } from "../src/services/assistantService.js";
+import {
+  citedNumbers,
+  relevantDeadlines,
+} from "../src/services/assistantService.js";
 import { GeminiProvider } from "../src/services/llm/geminiProvider.js";
 import {
   createLlmProvider,
@@ -13,6 +16,7 @@ import { OllamaProvider } from "../src/services/llm/ollamaProvider.js";
 import {
   type ChatRequest,
   type LlmProvider,
+  LlmQuotaError,
   LlmResponseError,
   LlmTimeoutError,
   LlmUnavailableError,
@@ -58,6 +62,7 @@ function fakeModel(answers: { terms?: string[]; answer?: string | Error }) {
   const requests: ChatRequest[] = [];
   const model: LlmProvider = {
     name: "fake:model",
+    timeoutMs: 60_000,
     async chat(request) {
       requests.push(request);
       if (request.json) {
@@ -116,6 +121,8 @@ describe("POST /api/assistant/ask with a language model", () => {
     expect(res.status).toBe(200);
     expect(res.body.mode).toBe("answer");
     expect(res.body.answer).toContain("annenhver måned [2]");
+    // The dates are in the answer itself
+    expect(res.body.deadlines).toEqual([]);
     expect(res.body.sources[0]).toMatchObject({
       number: 1,
       kind: "rules",
@@ -211,7 +218,7 @@ describe("POST /api/assistant/ask with a language model", () => {
   it("gives the sources when the model cannot answer, without logging the question", async () => {
     fakeModel({
       terms: ["mva-melding"],
-      answer: new LlmResponseError("Gemini answered 429: quota"),
+      answer: new LlmResponseError("Gemini answered 400: bad request"),
     });
 
     const res = await ask({
@@ -220,6 +227,7 @@ describe("POST /api/assistant/ask with a language model", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.mode).toBe("sources");
+    expect(res.body.reason).toBe("modelFailed");
     expect(res.body.answer).toBeNull();
     expect(res.body.sources[0].cited).toBe(false);
     expect(res.body.disclaimer).toContain("utdrag");
@@ -227,9 +235,71 @@ describe("POST /api/assistant/ask with a language model", () => {
     expect(logs.raw.join("")).not.toContain("01019912345");
   });
 
+  it("says when the model's quota is used up, and asks again next time", async () => {
+    const requests = fakeModel({
+      terms: ["mva-melding"],
+      answer: new LlmQuotaError("Gemini answered 429: quota"),
+    });
+
+    const res = await ask({ question: "Når leverer jeg mva?" });
+
+    expect(res.body.mode).toBe("sources");
+    expect(res.body.reason).toBe("modelQuota");
+    expect(logs.raw.join("")).toContain("quota is used up");
+    // A fallback is not kept: the same question asks the model again
+    await ask({ question: "Når leverer jeg mva?" });
+    expect(requests).toHaveLength(4);
+  });
+
+  it("asks the model once per question when search terms are off", async () => {
+    vi.stubEnv("ASSISTANT_SEARCH_TERMS", "off");
+    const requests = fakeModel({
+      terms: ["x"],
+      answer: "Annenhver måned [2].",
+    });
+
+    const res = await ask({ question: "mva-meldingen frister" });
+
+    expect(res.body.mode).toBe("answer");
+    expect(res.body.reason).toBeNull();
+    expect(res.body.sources[1].url).toBe(MVA_URL);
+    expect(requests).toHaveLength(1);
+    expect(requests[0]?.json).toBeUndefined();
+  });
+
+  it("shares the model's time limit between the steps of one question", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-20T10:00:00Z"));
+    const requests: ChatRequest[] = [];
+    setLlmProvider({
+      name: "fake:slow",
+      timeoutMs: 60_000,
+      async chat(request) {
+        requests.push(request);
+        if (request.json) {
+          // The search terms take 15 seconds
+          vi.setSystemTime(Date.now() + 15_000);
+          return JSON.stringify({ terms: ["mva-melding"] });
+        }
+        return "Annenhver måned [2].";
+      },
+    });
+
+    try {
+      await ask({ question: "Når leverer jeg mva-meldingen?" });
+    } finally {
+      vi.useRealTimers();
+    }
+
+    // At most a third for the search terms, the rest for the answer
+    expect(requests[0]?.timeoutMs).toBe(20_000);
+    expect(requests[1]?.timeoutMs).toBe(45_000);
+  });
+
   it("searches the question itself when the search terms cannot be made", async () => {
     const model: LlmProvider = {
       name: "fake:broken",
+      timeoutMs: 60_000,
       async chat(request) {
         if (request.json) return "not json";
         return "Annenhver måned [1].";
@@ -349,6 +419,7 @@ describe("POST /api/assistant/ask without a language model", () => {
 
     expect(res.status).toBe(200);
     expect(res.body.mode).toBe("sources");
+    expect(res.body.reason).toBe("noModel");
     expect(res.body.answer).toBeNull();
     expect(res.body.sources[0]).toMatchObject({
       number: 1,
@@ -357,10 +428,114 @@ describe("POST /api/assistant/ask without a language model", () => {
       cited: false,
     });
     expect(res.body.sources[0].excerpt.length).toBeLessThanOrEqual(282);
-    // The rules are given to a model only; an excerpt of them says little
+    // The rules are not a source here: their deadlines come on their own
     expect(
       res.body.sources.every((s: { kind: string }) => s.kind === "page"),
     ).toBe(true);
+    expect(res.body.deadlines).toEqual([
+      {
+        title: "Mva-melding",
+        text: expect.stringContaining(
+          "januar–februar innen 10. april, mars–april innen 10. juni",
+        ),
+      },
+    ]);
+  });
+
+  it("gives the deadlines in English when asked", async () => {
+    const res = await ask({
+      question: "When is the VAT return due?",
+      language: "en",
+    });
+
+    expect(res.body.deadlines).toEqual([
+      {
+        title: "VAT return",
+        text: expect.stringContaining("January–February by 10 April"),
+      },
+    ]);
+  });
+
+  it("gives a company's own next dates, for its obligations only", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-11-20T10:00:00Z"));
+    try {
+      const assessment = await createAssessment();
+
+      const vat = await ask({
+        question: "Når er neste frist for mva-meldingen?",
+        assessmentId: assessment.id,
+      });
+      expect(vat.body.deadlines).toEqual([
+        {
+          title: "Mva-melding",
+          text: "De neste fristene: 10. desember 2026, 10. februar 2027, 12. april 2027.",
+        },
+      ]);
+
+      // The sole proprietorship pays no salaries: no a-melding to show
+      const aMelding = await ask({
+        question: "Når må a-meldingen leveres?",
+        assessmentId: assessment.id,
+      });
+      expect(aMelding.body.deadlines).toEqual([]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe("deadlines without the model", () => {
+  const obligations = [
+    {
+      id: "vat-return",
+      title: "Mva-melding",
+      text: "Annenhver måned.",
+      sourceUrl: MVA_URL,
+    },
+    {
+      id: "tax-return-company",
+      title: "Skattemelding for selskap",
+      text: "Innen 31. mai.",
+      sourceUrl: AS_URL,
+    },
+  ];
+  const hit = (url: string) => ({
+    url,
+    title: "Side",
+    heading: "Del",
+    text: "Tekst",
+  });
+
+  it("are the obligations the question names", () => {
+    expect(
+      relevantDeadlines("Hva koster MVA?", [hit(AS_URL)], obligations),
+    ).toEqual([{ title: "Mva-melding", text: "Annenhver måned." }]);
+    expect(
+      relevantDeadlines("When is the company tax return due?", [], obligations),
+    ).toEqual([{ title: "Skattemelding for selskap", text: "Innen 31. mai." }]);
+  });
+
+  it("are the obligations of the first pages found when it names none", () => {
+    expect(
+      relevantDeadlines(
+        "Hvordan leverer jeg?",
+        [hit("https://example.no/"), hit(AS_URL)],
+        obligations,
+      ),
+    ).toEqual([{ title: "Skattemelding for selskap", text: "Innen 31. mai." }]);
+    // Further down the list does not count
+    expect(
+      relevantDeadlines(
+        "Hvordan leverer jeg?",
+        [
+          hit("https://example.no/a"),
+          hit("https://example.no/b"),
+          hit(MVA_URL),
+        ],
+        obligations,
+      ),
+    ).toEqual([]);
   });
 });
 
@@ -431,7 +606,29 @@ describe("GET /api/assistant/status", () => {
       ready: true,
       knowledgeBase: { pages: 2, sections: 3 },
       model: "fake:model",
+      freeTier: false,
     });
+  });
+
+  it("tells when Gemini is used on its free tier", async () => {
+    setLlmProvider(undefined);
+    vi.stubEnv("AI_PROVIDER", "gemini");
+    vi.stubEnv("GEMINI_API_KEY", "key");
+    vi.stubEnv("GEMINI_MODEL", "gemini-3.6-flash");
+
+    expect(
+      (await request(app).get("/api/assistant/status")).body.freeTier,
+    ).toBe(false);
+    vi.stubEnv("GEMINI_FREE_TIER", "true");
+    expect(
+      (await request(app).get("/api/assistant/status")).body.freeTier,
+    ).toBe(true);
+    // Only Gemini has this free tier
+    vi.stubEnv("AI_PROVIDER", "ollama");
+    vi.stubEnv("OLLAMA_MODEL", "qwen3");
+    expect(
+      (await request(app).get("/api/assistant/status")).body.freeTier,
+    ).toBe(false);
   });
 });
 
@@ -472,6 +669,7 @@ describe("language model providers", () => {
       apiKey: "key",
       model: "m",
       timeoutMs: 1000,
+      thinkingLevel: null,
     });
 
     const answer = await gemini.chat({
@@ -491,6 +689,45 @@ describe("language model providers", () => {
       { role: "user", parts: [{ text: "Spørsmål" }] },
     ]);
     expect(body.generationConfig.responseMimeType).toBe("application/json");
+    // No level set: the model's own default
+    expect(body.generationConfig.thinkingConfig).toBeUndefined();
+  });
+
+  it("ask Gemini for the thinking level set, and leave thoughts out of the answer", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  { text: "Tenker på fristene", thought: true },
+                  { text: "Neste frist er 10. desember [1]." },
+                ],
+              },
+            },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+    setLlmProvider(undefined);
+    vi.stubEnv("AI_PROVIDER", "gemini");
+    vi.stubEnv("GEMINI_API_KEY", "key");
+    vi.stubEnv("GEMINI_MODEL", "gemini-4-hydrogen");
+    vi.stubEnv("GEMINI_THINKING_LEVEL", " Low ");
+    const gemini = createLlmProvider();
+
+    const answer = await gemini?.chat({
+      messages: [{ role: "user", content: "Neste frist?" }],
+    });
+
+    expect(answer).toBe("Neste frist er 10. desember [1].");
+    const [, init] = fetchMock.mock.calls[0] ?? [];
+    const body = JSON.parse(String((init as RequestInit).body));
+    expect(body.generationConfig.thinkingConfig).toEqual({
+      thinkingLevel: "low",
+    });
   });
 
   it("turn Gemini's errors into the app's own", async () => {
@@ -503,6 +740,7 @@ describe("language model providers", () => {
       apiKey: "key",
       model: "m",
       timeoutMs: 1000,
+      thinkingLevel: null,
     });
 
     await expect(gemini.chat({ messages: [] })).rejects.toBeInstanceOf(
@@ -522,6 +760,104 @@ describe("language model providers", () => {
     await expect(gemini.chat({ messages: [] })).rejects.toBeInstanceOf(
       LlmTimeoutError,
     );
+  });
+
+  it("try Gemini again when it is busy, but not when the quota is used up", async () => {
+    const busy = () =>
+      new Response(JSON.stringify({ error: { message: "high demand" } }), {
+        status: 503,
+      });
+    const answer = () =>
+      new Response(
+        JSON.stringify({
+          candidates: [{ content: { parts: [{ text: "Svar [1]." }] } }],
+        }),
+        { status: 200 },
+      );
+    const gemini = new GeminiProvider({
+      apiKey: "key",
+      model: "m",
+      timeoutMs: 1000,
+      thinkingLevel: null,
+      retryDelaysMs: [1, 1],
+    });
+
+    // Busy, then a connection lost for a moment, then an answer
+    let fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(busy())
+      .mockRejectedValueOnce(new TypeError("fetch failed"))
+      .mockResolvedValueOnce(answer());
+    await expect(gemini.chat({ messages: [] })).resolves.toBe("Svar [1].");
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+
+    // Busy every time: three tries, then the error
+    fetchMock.mockReset();
+    fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async () => busy());
+    await expect(gemini.chat({ messages: [] })).rejects.toThrow(
+      "Gemini answered 503",
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+
+    // A used-up quota is an error of its own
+    fetchMock.mockReset();
+    fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response("{}", { status: 429 }));
+    await expect(gemini.chat({ messages: [] })).rejects.toBeInstanceOf(
+      LlmQuotaError,
+    );
+
+    // The quota and a bad request do not pass by themselves: one try
+    for (const status of [429, 400]) {
+      fetchMock.mockReset();
+      fetchMock = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValue(new Response("{}", { status }));
+      await expect(gemini.chat({ messages: [] })).rejects.toBeInstanceOf(
+        LlmResponseError,
+      );
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  it("give Gemini no more time than the request has left", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response("{}", { status: 503 }));
+    const gemini = new GeminiProvider({
+      apiKey: "key",
+      model: "m",
+      timeoutMs: 60_000,
+      thinkingLevel: null,
+      retryDelaysMs: [5000],
+    });
+
+    // 60 seconds would leave time for a try after 5; 2 seconds do not
+    await expect(
+      gemini.chat({ messages: [], timeoutMs: 2000 }),
+    ).rejects.toBeInstanceOf(LlmResponseError);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("do not try Gemini again when there is no time left for it", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response("{}", { status: 503 }));
+    const gemini = new GeminiProvider({
+      apiKey: "key",
+      model: "m",
+      timeoutMs: 1000,
+      thinkingLevel: null,
+      retryDelaysMs: [5000],
+    });
+
+    await expect(gemini.chat({ messages: [] })).rejects.toBeInstanceOf(
+      LlmResponseError,
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("send Ollama the messages and the JSON format", async () => {
@@ -557,6 +893,24 @@ describe("language model providers", () => {
       // The default context window would cut the sources off
       options: { num_ctx: 8192 },
     });
+  });
+
+  it("tell when Ollama Cloud's limits are used up", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ error: "usage limit reached" }), {
+        status: 429,
+      }),
+    );
+    const ollama = new OllamaProvider({
+      host: "https://ollama.com",
+      model: "gpt-oss:20b",
+      apiKey: "key",
+      timeoutMs: 1000,
+    });
+
+    await expect(ollama.chat({ messages: [] })).rejects.toBeInstanceOf(
+      LlmQuotaError,
+    );
   });
 
   it("say when Ollama is not running", async () => {

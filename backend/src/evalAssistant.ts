@@ -9,14 +9,19 @@ import "dotenv/config";
 import { sequelize } from "./config/database.js";
 import { EVAL_QUESTIONS } from "./knowledge/evalQuestions.js";
 import { search } from "./knowledge/search.js";
-import { searchTerms } from "./services/assistantService.js";
+import {
+  searchTerms,
+  searchTermsEnabled,
+} from "./services/assistantService.js";
 import { createLlmProvider } from "./services/llm/llmProvider.js";
 
 const TOP = 5;
 
 try {
   await sequelize.authenticate();
-  const provider = createLlmProvider();
+  // ASSISTANT_SEARCH_TERMS=off measures the search the way it then runs:
+  // with the question itself, without the model
+  const provider = searchTermsEnabled() ? createLlmProvider() : null;
   let found = 0;
   const misses: string[] = [];
 
