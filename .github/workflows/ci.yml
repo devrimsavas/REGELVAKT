@@ -56,9 +56,31 @@ jobs:
       - name: Check that the compiled app loads
         run: node --input-type=module -e "await import('./dist/app.js')"
 
-  # Builds the image and starts it with its database as docker-compose.yml
-  # does, then waits until the API reports healthy: migrations ran and the
-  # database answers
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+
+  # Builds the images and starts them with the database as
+  # docker-compose.yml does, then waits until all of them report healthy:
+  # migrations ran, the database answers and the web app serves pages
   docker:
     runs-on: ubuntu-latest
     steps:
@@ -73,10 +95,13 @@ jobs:
           sed -i "s/^KNOWLEDGE_UPDATES=.*/KNOWLEDGE_UPDATES=off/" .env
 
       - name: Build and start
-        run: docker compose up -d --build --wait --wait-timeout 120
+        run: docker compose up -d --build --wait --wait-timeout 180
 
       - name: The API answers
         run: curl --fail --silent http://127.0.0.1:3000/api/health
+
+      - name: The web app shows the front page
+        run: curl --fail --silent http://127.0.0.1:3001/ | grep -q "Regelvakt"
 
       - name: Logs
         if: always()

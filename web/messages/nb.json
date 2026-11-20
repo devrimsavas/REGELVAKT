@@ -1,0 +1,129 @@
+{
+  "metadata": {
+    "title": "Regelvakt – plikter og frister for små virksomheter",
+    "description": "Se hvilke plikter og frister ditt enkeltpersonforetak eller aksjeselskap har overfor Skatteetaten og Brønnøysundregistrene, med kilder, kalender og påminnelser."
+  },
+  "header": {
+    "home": "Regelvakt, til forsiden",
+    "skipLink": "Hopp til hovedinnholdet",
+    "switchLanguage": "English",
+    "switchLanguageLabel": "Change the language to English",
+    "colorScheme": "Bytt mellom lyst og mørkt utseende"
+  },
+  "footer": {
+    "tagline": "Plikter og frister for små virksomheter, fra de offisielle kildene.",
+    "sources": "Kilder",
+    "skatteetaten": "Skatteetaten",
+    "brreg": "Brønnøysundregistrene",
+    "opensInNewTab": "(åpnes i ny fane)",
+    "notAdvice": "Regelvakt er ikke skatte- eller regnskapsrådgivning. Sjekk alltid kilden.",
+    "inDevelopment": "Regelvakt er under utvikling."
+  },
+  "home": {
+    "title": "Hvilke plikter og frister har virksomheten din?",
+    "lead": "Regelvakt viser hva ditt enkeltpersonforetak eller aksjeselskap må levere og betale til Skatteetaten og Brønnøysundregistrene, og når. Hver plikt har en lenke til den offisielle siden den bygger på.",
+    "howTitle": "Slik fungerer det",
+    "step1Title": "Skriv inn organisasjonsnummeret",
+    "step1Text": "Regelvakt henter foretaket fra Enhetsregisteret.",
+    "step2Title": "Svar på noen få spørsmål",
+    "step2Text": "Om merverdiavgift, lønn og overskudd: bare det reglene trenger å vite.",
+    "step3Title": "Se pliktene og fristene",
+    "step3Text": "Med hvorfor hver plikt gjelder, en kalender du kan abonnere på og påminnelser på e-post."
+  },
+  "notFound": {
+    "title": "Fant ikke siden",
+    "text": "Siden finnes ikke, eller lenken er feil.",
+    "back": "Til forsiden"
+  },
+  "error": {
+    "title": "Noe gikk galt",
+    "text": "Siden kunne ikke vises. Prøv igjen om litt.",
+    "retry": "Prøv igjen"
+  },
+  "search": {
+    "label": "Organisasjonsnummer",
+    "description": "Ni sifre. Du finner det på brreg.no eller i Altinn.",
+    "submit": "Finn virksomheten",
+    "empty": "Skriv inn organisasjonsnummeret.",
+    "invalid": "Organisasjonsnummeret er ikke gyldig. Det har ni sifre; sjekk at du har skrevet det riktig."
+  },
+  "company": {
+    "orgNumber": "Org.nr. {orgNumber}",
+    "vatRegistered": "Registrert i Merverdiavgiftsregisteret",
+    "notVatRegistered": "Ikke registrert i Merverdiavgiftsregisteret",
+    "bankrupt": "Konkurs",
+    "forcedLiquidation": "Under tvangsavvikling",
+    "liquidation": "Under avvikling"
+  },
+  "start": {
+    "metaTitle": "Spørsmål om {name}",
+    "back": "Søk etter en annen virksomhet",
+    "questionsTitle": "Noen spørsmål om virksomheten",
+    "questionsLead": "Svarene avgjør hvilke plikter og frister som gjelder. Du kan endre dem senere.",
+    "notSupportedTitle": "Regelvakt gjelder foreløpig bare enkeltpersonforetak og aksjeselskap",
+    "notSupportedText": "{name} er registrert som {form}. Reglene for denne organisasjonsformen er ikke laget ennå.",
+    "errorTitle": "Vi fant ikke virksomheten"
+  },
+  "questions": {
+    "yes": "Ja",
+    "no": "Nei",
+    "submitCreate": "Se pliktene og fristene",
+    "submitUpdate": "Lagre svarene",
+    "cancel": "Avbryt",
+    "missingSummary": "Svar på alle spørsmålene for å gå videre:",
+    "missing": "Velg et svar."
+  },
+  "assessment": {
+    "metaTitle": "Plikter og frister for {name}",
+    "newSearch": "Søk etter en annen virksomhet",
+    "updated": "Svarene er lagret, og pliktene og fristene under er regnet ut på nytt.",
+    "saveLinkTitle": "Ta vare på lenken til denne siden",
+    "saveLinkText": "Siden har ingen innlogging: lenken er veien tilbake hit. Alle som har lenken, kan se siden.",
+    "copyLink": "Kopier lenken",
+    "copied": "Lenken er kopiert",
+    "answersOutdatedTitle": "Opplysningene om virksomheten har endret seg",
+    "answersOutdatedText": "Brønnøysundregistrene har nye opplysninger om virksomheten, og noen av svarene dine passer ikke lenger.",
+    "answersOutdatedLink": "Svar på spørsmålene på nytt",
+    "notSupportedTitle": "Regelvakt gjelder foreløpig bare enkeltpersonforetak og aksjeselskap",
+    "notSupportedText": "Virksomheten er registrert som {form}. Reglene for denne organisasjonsformen er ikke laget ennå.",
+    "warningSource": "Les mer",
+    "nextTitle": "De neste fristene",
+    "nextEmpty": "Ingen faste frister de neste tolv månedene.",
+    "obligationsTitle": "Pliktene til virksomheten",
+    "obligationsLead": "{count, plural, one {# plikt} other {# plikter}}, sortert etter neste frist.",
+    "why": "Hvorfor",
+    "nextDeadline": "Neste frist",
+    "noFixedDeadline": "Ingen fast frist",
+    "allDeadlines": "Alle frister de neste tolv månedene ({count})",
+    "readMore": "Les mer hos kilden",
+    "file": "Gå til innlevering",
+    "answersTitle": "Svarene dine",
+    "editAnswers": "Endre svarene",
+    "deadlineColumn": "Frist",
+    "obligationColumn": "Plikt",
+    "rulesVersion": "Regelvakts regler, versjon {version}. Faller en frist på en helg eller helligdag, er den flyttet til neste virkedag, bortsett fra årsregnskapet.",
+    "notFoundTitle": "Fant ikke siden",
+    "notFoundText": "Lenken er feil, eller siden er slettet."
+  },
+  "when": {
+    "today": "i dag",
+    "tomorrow": "i morgen",
+    "inDays": "om {days} dager"
+  },
+  "answersPage": {
+    "metaTitle": "Endre svarene for {name}",
+    "title": "Endre svarene",
+    "lead": "Pliktene og fristene for {name} regnes ut på nytt når du lagrer. Påminnelser du har bestilt, følger de nye svarene."
+  },
+  "apiErrors": {
+    "unreachable": "Regelvakt får ikke kontakt med tjenesten sin akkurat nå. Prøv igjen om litt.",
+    "tooManyRequests": "Det har kommet mange forespørsler fra deg på kort tid. Prøv igjen om {minutes, plural, one {# minutt} other {# minutter}}.",
+    "brregUnavailable": "Brønnøysundregistrene svarer ikke akkurat nå. Prøv igjen om litt.",
+    "companyNotFound": "Det finnes ingen virksomhet med dette organisasjonsnummeret i Enhetsregisteret.",
+    "companyStruckOff": "Virksomheten er slettet fra Enhetsregisteret.",
+    "assessmentNotFound": "Siden finnes ikke lenger; den kan være slettet.",
+    "notSupported": "Regelvakt gjelder foreløpig bare enkeltpersonforetak og aksjeselskap.",
+    "invalidAnswers": "Svarene passer ikke til spørsmålene lenger. Last siden på nytt og svar igjen.",
+    "unexpected": "Noe gikk galt. Prøv igjen om litt."
+  }
+}

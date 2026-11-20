@@ -1,0 +1,129 @@
+{
+  "metadata": {
+    "title": "Regelvakt – obligations and deadlines for small businesses",
+    "description": "See which obligations and deadlines your sole proprietorship or limited company has towards the Norwegian Tax Administration and the Brønnøysund Register Centre, with sources, a calendar and reminders."
+  },
+  "header": {
+    "home": "Regelvakt, to the front page",
+    "skipLink": "Skip to main content",
+    "switchLanguage": "Norsk",
+    "switchLanguageLabel": "Bytt språk til norsk",
+    "colorScheme": "Switch between light and dark appearance"
+  },
+  "footer": {
+    "tagline": "Obligations and deadlines for small businesses, from the official sources.",
+    "sources": "Sources",
+    "skatteetaten": "The Norwegian Tax Administration",
+    "brreg": "The Brønnøysund Register Centre",
+    "opensInNewTab": "(opens in a new tab)",
+    "notAdvice": "Regelvakt is not tax or accounting advice. Always check the source.",
+    "inDevelopment": "Regelvakt is under development."
+  },
+  "home": {
+    "title": "Which obligations and deadlines does your business have?",
+    "lead": "Regelvakt shows what your sole proprietorship or limited company must file and pay to the Norwegian Tax Administration and the Brønnøysund Register Centre, and when. Every obligation links to the official page it is based on.",
+    "howTitle": "How it works",
+    "step1Title": "Enter the organization number",
+    "step1Text": "Regelvakt looks the business up in the Central Coordinating Register for Legal Entities.",
+    "step2Title": "Answer a few questions",
+    "step2Text": "About VAT, salaries and profit: only what the rules need to know.",
+    "step3Title": "See the obligations and deadlines",
+    "step3Text": "With why each obligation applies, a calendar you can subscribe to and reminders by email."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "text": "The page does not exist, or the link is wrong.",
+    "back": "To the front page"
+  },
+  "error": {
+    "title": "Something went wrong",
+    "text": "The page could not be shown. Please try again in a moment.",
+    "retry": "Try again"
+  },
+  "search": {
+    "label": "Organization number",
+    "description": "Nine digits. You find it on brreg.no or in Altinn.",
+    "submit": "Find the business",
+    "empty": "Enter the organization number.",
+    "invalid": "The organization number is not valid. It has nine digits; check that you typed it correctly."
+  },
+  "company": {
+    "orgNumber": "Org. no. {orgNumber}",
+    "vatRegistered": "Registered in the VAT register",
+    "notVatRegistered": "Not registered in the VAT register",
+    "bankrupt": "Bankrupt",
+    "forcedLiquidation": "Under forced liquidation",
+    "liquidation": "Being wound up"
+  },
+  "start": {
+    "metaTitle": "Questions about {name}",
+    "back": "Search for another business",
+    "questionsTitle": "A few questions about the business",
+    "questionsLead": "The answers decide which obligations and deadlines apply. You can change them later.",
+    "notSupportedTitle": "Regelvakt covers only sole proprietorships and limited companies for now",
+    "notSupportedText": "{name} is registered as {form}. The rules for this organization form have not been written yet.",
+    "errorTitle": "We could not find the business"
+  },
+  "questions": {
+    "yes": "Yes",
+    "no": "No",
+    "submitCreate": "See the obligations and deadlines",
+    "submitUpdate": "Save the answers",
+    "cancel": "Cancel",
+    "missingSummary": "Answer all the questions to go on:",
+    "missing": "Choose an answer."
+  },
+  "assessment": {
+    "metaTitle": "Obligations and deadlines for {name}",
+    "newSearch": "Search for another business",
+    "updated": "The answers are saved, and the obligations and deadlines below have been worked out again.",
+    "saveLinkTitle": "Keep the link to this page",
+    "saveLinkText": "The page has no login: the link is the way back here. Anyone with the link can see the page.",
+    "copyLink": "Copy the link",
+    "copied": "The link is copied",
+    "answersOutdatedTitle": "The information about the business has changed",
+    "answersOutdatedText": "The Brønnøysund Register Centre has new information about the business, and some of your answers no longer fit.",
+    "answersOutdatedLink": "Answer the questions again",
+    "notSupportedTitle": "Regelvakt covers only sole proprietorships and limited companies for now",
+    "notSupportedText": "The business is registered as {form}. The rules for this organization form have not been written yet.",
+    "warningSource": "Read more",
+    "nextTitle": "The next deadlines",
+    "nextEmpty": "No fixed deadlines in the next twelve months.",
+    "obligationsTitle": "The business's obligations",
+    "obligationsLead": "{count, plural, one {# obligation} other {# obligations}}, by next deadline.",
+    "why": "Why",
+    "nextDeadline": "Next deadline",
+    "noFixedDeadline": "No fixed deadline",
+    "allDeadlines": "All deadlines in the next twelve months ({count})",
+    "readMore": "Read more at the source",
+    "file": "Go to filing",
+    "answersTitle": "Your answers",
+    "editAnswers": "Change the answers",
+    "deadlineColumn": "Deadline",
+    "obligationColumn": "Obligation",
+    "rulesVersion": "Regelvakt's rules, version {version}. A deadline on a weekend or public holiday has been moved to the next business day, except for the annual accounts.",
+    "notFoundTitle": "Page not found",
+    "notFoundText": "The link is wrong, or the page has been deleted."
+  },
+  "when": {
+    "today": "today",
+    "tomorrow": "tomorrow",
+    "inDays": "in {days} days"
+  },
+  "answersPage": {
+    "metaTitle": "Change the answers for {name}",
+    "title": "Change the answers",
+    "lead": "The obligations and deadlines for {name} are worked out again when you save. Reminders you have ordered follow the new answers."
+  },
+  "apiErrors": {
+    "unreachable": "Regelvakt cannot reach its service right now. Please try again in a moment.",
+    "tooManyRequests": "There have been many requests from you in a short time. Try again in {minutes, plural, one {# minute} other {# minutes}}.",
+    "brregUnavailable": "The Brønnøysund Register Centre is not answering right now. Please try again in a moment.",
+    "companyNotFound": "There is no business with this organization number in the Central Coordinating Register for Legal Entities.",
+    "companyStruckOff": "The business has been deleted from the Central Coordinating Register for Legal Entities.",
+    "assessmentNotFound": "The page no longer exists; it may have been deleted.",
+    "notSupported": "Regelvakt covers only sole proprietorships and limited companies for now.",
+    "invalidAnswers": "The answers no longer fit the questions. Load the page again and answer again.",
+    "unexpected": "Something went wrong. Please try again in a moment."
+  }
+}

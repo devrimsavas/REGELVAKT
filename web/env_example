@@ -1,0 +1,10 @@
+# Settings for the web app: copy to .env.local in web/
+
+# Where the Next.js server reaches the Regelvakt API. The browser never
+# talks to the API; only this server does.
+API_URL=http://localhost:3000
+
+# The header that holds the visitor's address, sent on to the API for its
+# per-address limits. Leave empty for the first address in
+# X-Forwarded-For; behind Cloudflare use cf-connecting-ip.
+CLIENT_IP_HEADER=

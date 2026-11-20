@@ -1,0 +1,51 @@
+.hero {
+  padding-block: var(--ds-size-15) var(--ds-size-12);
+  max-width: 44rem;
+}
+
+.lead {
+  margin-top: var(--ds-size-4);
+  color: var(--ds-color-neutral-text-subtle);
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--ds-size-6);
+  margin: var(--ds-size-6) 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.step {
+  counter-increment: step;
+  padding: var(--ds-size-6);
+  border: 1px solid var(--ds-color-neutral-border-subtle);
+  border-radius: var(--ds-border-radius-lg);
+  background: var(--ds-color-neutral-surface-default);
+}
+
+.step h3 {
+  margin-bottom: var(--ds-size-2);
+}
+
+/* The step's number above its heading */
+.step::before {
+  content: counter(step);
+  display: inline-grid;
+  place-items: center;
+  width: var(--ds-size-8);
+  height: var(--ds-size-8);
+  margin-bottom: var(--ds-size-3);
+  border-radius: 50%;
+  background: var(--ds-color-accent-base-default);
+  color: var(--ds-color-accent-base-contrast-default);
+  font-weight: var(--ds-font-weight-semibold);
+}
+
+@media (max-width: 52rem) {
+  .steps {
+    grid-template-columns: 1fr;
+  }
+}

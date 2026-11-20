@@ -1,12 +1,14 @@
-# Regelvakt with its database, the same on a laptop and on a server.
+# Regelvakt: the web app, the API and the database, the same on a laptop
+# and on a server.
 #
 #   cp docker.env_example .env      # then fill it in
 #   docker compose up -d --build
 #
-# The settings come from .env next to this file (never committed). The API
-# is reachable only from this machine (127.0.0.1); on a server, a reverse
-# proxy or a Cloudflare tunnel in front of it is what the internet sees.
-# PostgreSQL has no port outside Docker at all.
+# The settings come from .env next to this file (never committed). The web
+# app is reachable from this machine (127.0.0.1); on a server, a Cloudflare
+# tunnel or a reverse proxy in front of it is what the internet sees. The
+# web app calls the API inside Docker; the API's port on 127.0.0.1 is for
+# Swagger and troubleshooting. PostgreSQL has no port outside Docker.
 
 services:
   db:
@@ -49,6 +51,22 @@ services:
     # The app finishes the running reminder or knowledge work in up to 30
     # seconds after it is told to stop; give it a little more than that
     stop_grace_period: 40s
+
+  web:
+    build: ./web
+    image: regelvakt-web
+    restart: unless-stopped
+    environment:
+      # The API inside Docker's network
+      API_URL: http://api:3000
+      # The header that holds the visitor's address (cf-connecting-ip
+      # behind a Cloudflare tunnel); empty for X-Forwarded-For
+      CLIENT_IP_HEADER: ${CLIENT_IP_HEADER:-}
+    ports:
+      - "127.0.0.1:${WEB_PORT:-3001}:3001"
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   db-data:

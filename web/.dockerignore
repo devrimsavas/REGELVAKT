@@ -1,0 +1,13 @@
+# Only what the build needs is sent to Docker. Local builds, settings and
+# test output stay out.
+node_modules
+.next
+out
+tests
+playwright-report
+test-results
+.env
+.env.*
+*.tsbuildinfo
+next-env.d.ts
+env_example

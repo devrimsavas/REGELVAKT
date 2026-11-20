@@ -1,0 +1,17 @@
+.form {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--ds-size-3);
+  margin-top: var(--ds-size-8);
+  max-width: 36rem;
+}
+
+/* The field takes the room the button leaves; on phones both are full width */
+.form > :first-child {
+  flex: 1 1 16rem;
+}
+
+.input {
+  font-variant-numeric: tabular-nums;
+}
