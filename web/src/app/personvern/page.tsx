@@ -2,6 +2,7 @@ import { Button, Heading, Paragraph } from "@digdir/designsystemet-react";
 import type { Metadata } from "next";
 import NextLink from "next/link";
 import { getTranslations } from "next-intl/server";
+import { counterUrl } from "@/lib/analytics";
 import { SITE } from "@/lib/site";
 import styles from "../om/about.module.css";
 import pages from "../pages.module.css";
@@ -19,12 +20,18 @@ const SECTIONS = [
   "assistant",
   "others",
   "cookies",
+  "counting",
   "logs",
   "rights",
 ] as const;
 
 export default async function PrivacyPage() {
   const t = await getTranslations("privacy");
+  // The counting section only where page views are counted
+  const counting = counterUrl() !== null;
+  const sections = SECTIONS.filter(
+    (section) => section !== "counting" || counting,
+  );
 
   return (
     <article className={`container ${pages.page}`}>
@@ -35,7 +42,7 @@ export default async function PrivacyPage() {
         {t("lead")}
       </Paragraph>
 
-      {SECTIONS.map((section) => (
+      {sections.map((section) => (
         <section
           key={section}
           aria-labelledby={`privacy-${section}`}

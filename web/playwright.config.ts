@@ -32,6 +32,10 @@ const DB = {
 export const API_LOG = "e2e/.output/api.log";
 export const E2E_DB = DB;
 
+// The page view counter the web app is started with. Made up: the tests
+// answer for GoatCounter (e2e/helpers/test.ts).
+export const COUNTER_URL = "https://e2e.goatcounter.test/count";
+
 export default defineConfig({
   testDir: "./e2e",
   // The tests share one database and one API; one at a time keeps the
@@ -101,6 +105,8 @@ export default defineConfig({
       env: {
         API_URL: `http://127.0.0.1:${API_PORT}`,
         NEXT_TELEMETRY_DISABLED: "1",
+        // A made-up counter; the tests answer for GoatCounter (helpers/test.ts)
+        GOATCOUNTER_URL: COUNTER_URL,
       },
       reuseExistingServer: false,
       timeout: 300_000,

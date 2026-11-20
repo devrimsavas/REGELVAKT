@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./helpers/test";
 import { AS, createAssessment, ENK, QUESTIONS } from "./helpers/flow";
 
 test.describe("the assessment", () => {

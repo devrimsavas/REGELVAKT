@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./helpers/test";
 import { BANKRUPT, BRREG_DOWN, ENK, NUF, STRUCK_OFF } from "./helpers/flow";
 
 test.describe("searching for a business", () => {

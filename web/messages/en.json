@@ -290,6 +290,8 @@
     "others": "The organization number is looked up in the Brønnøysund Register Centre's open API. The emails are sent through the email service Resend, which gets the address and the content of the email. No information is sold or given to anyone else.",
     "cookiesTitle": "Cookies",
     "cookies": "Regelvakt uses only two cookies: one that remembers the language you have chosen, and one that remembers light or dark appearance. Neither is used for tracking, which is why we do not ask for consent.",
+    "countingTitle": "Counting visits",
+    "counting": "We count how many people open each page, with GoatCounter and without cookies. GoatCounter gets the page's address without the organization number and without the code in the link, and what the browser sends with every request, such as the browser type, screen size and IP address. The IP address is used only to find the country and to count each visit once, and is not stored.",
     "logsTitle": "Logs",
     "logs": "The server writes each request to a log so errors can be found: which page, the answer and the time it took. The content of forms, questions and email addresses is not written to the log. The IP address is used to limit how many requests can come from one address. It is kept only in memory for as long as the limit lasts, an hour at most, and is not written to the log.",
     "rightsTitle": "Your choices",

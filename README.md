@@ -195,6 +195,7 @@ docker compose -f docker-compose.prod.yml ps     # all three "healthy"
 | `WEB_APP_URL`                                    | `https://regelvakt.devrimdev.no`                                      | the staging address                |
 | `EMAIL_PROVIDER`, `RESEND_API_KEY`, `EMAIL_FROM` | `resend`, a key of its own, an address on a domain verified in Resend | `log`: no real emails from staging |
 | `AI_PROVIDER`, `GEMINI_API_KEY`, `GEMINI_MODEL`  | `gemini` with a paid key (the free tier may use the questions)        | the same, or empty to turn it off  |
+| `GOATCOUNTER_URL`                                | the counter's `/count` address                                        | empty                              |
 
 `DB_HOST`, `DB_PORT` and `PORT` are set by the Compose file. `API_PORT` is not used on a server.
 
@@ -425,6 +426,7 @@ The first real question, "Når må jeg levere mva-meldingen?", got an answer tha
 - The assistant's rules source starts with the company's next deadlines; a robot marks the assistant; the reminder form has an invisible bot check (a hidden field and a minimum time) instead of a question people must answer; real email through Resend tested
 - Privacy page, and end-to-end tests (26, Playwright) through the whole web app with accessibility checks in light and dark mode, against the real API with stand-ins for Brreg and the language model; the API's Brreg address is now a setting (`BRREG_API_URL`)
 - Running on a server: `docker-compose.prod.yml` (only the web app on 127.0.0.1, for Cloudflare Tunnel), nightly backups with `scripts/backup-db.sh` and restoring with `scripts/restore-db.sh`; CI checks the server's Compose file
+- Page views counted with GoatCounter when `GOATCOUNTER_URL` is set: no cookies, the path only, with an assessment's id and the organization number taken out; the privacy page says so. The end-to-end tests now fail on anything the content security policy blocks
 
 ## Disclaimer
 

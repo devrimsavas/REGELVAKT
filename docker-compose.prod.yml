@@ -56,6 +56,8 @@ services:
       API_URL: http://api:3000
       # Behind Cloudflare the visitor's address is in cf-connecting-ip
       CLIENT_IP_HEADER: ${CLIENT_IP_HEADER:-cf-connecting-ip}
+      # Page view counts; empty counts nothing (staging)
+      GOATCOUNTER_URL: ${GOATCOUNTER_URL:-}
     ports:
       # Only on the server itself, for cloudflared. 3002 by default, since
       # another app on the same server may already use 3001

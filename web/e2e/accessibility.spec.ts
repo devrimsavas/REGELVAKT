@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Page, test } from "./helpers/test";
 import { AS, createAssessment } from "./helpers/flow";
 
 // WCAG 2.2 level A and AA, the level Norwegian rules (uu-forskriften) ask

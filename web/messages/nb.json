@@ -290,6 +290,8 @@
     "others": "Organisasjonsnummeret slås opp i Brønnøysundregistrenes åpne API. E-postene sendes gjennom e-posttjenesten Resend, som får adressen og innholdet i e-posten. Ingen opplysninger selges eller gis til andre.",
     "cookiesTitle": "Informasjonskapsler",
     "cookies": "Regelvakt bruker bare to informasjonskapsler: én som husker språket du har valgt, og én som husker lyst eller mørkt utseende. Ingen av dem brukes til sporing, og derfor spør vi ikke om samtykke.",
+    "countingTitle": "Besøkstelling",
+    "counting": "Vi teller hvor mange som åpner hver side, med GoatCounter og uten informasjonskapsler. GoatCounter får sidens adresse uten organisasjonsnummer og uten koden i lenken, og det nettleseren sender med hver forespørsel, som nettlesertype, skjermstørrelse og IP-adresse. IP-adressen brukes bare til å finne landet og til å telle hvert besøk én gang, og lagres ikke.",
     "logsTitle": "Logger",
     "logs": "Serveren skriver hver forespørsel i en logg for å kunne finne feil: hvilken side, svaret og tiden det tok. Innholdet i skjemaer, spørsmål og e-postadresser skrives ikke i loggen. IP-adressen brukes for å begrense hvor mange forespørsler som kan komme fra én adresse. Den holdes bare i minnet så lenge grensen gjelder, høyst en time, og skrives ikke i loggen.",
     "rightsTitle": "Dine valg",

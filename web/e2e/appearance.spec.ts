@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./helpers/test";
 
 test.describe("language and appearance", () => {
   test("follow the browser, and a choice is remembered", async ({ page }) => {

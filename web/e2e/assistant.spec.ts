@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./helpers/test";
 import { seedKnowledgeBase } from "./helpers/db";
 import { AS, createAssessment } from "./helpers/flow";
 
