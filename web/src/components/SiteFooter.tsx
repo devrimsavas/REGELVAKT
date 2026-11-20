@@ -17,6 +17,7 @@ export async function SiteFooter() {
     { href: "/assistent", text: header("assistant") },
     { href: "/om", text: header("about") },
     { href: "/kontakt", text: header("contact") },
+    { href: "/personvern", text: header("privacy") },
   ];
 
   return (

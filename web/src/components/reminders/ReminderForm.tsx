@@ -5,10 +5,12 @@ import {
   Button,
   Checkbox,
   Heading,
+  Link,
   Paragraph,
   Textfield,
   ValidationMessage,
 } from "@digdir/designsystemet-react";
+import NextLink from "next/link";
 import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 import { submitKeepingFields } from "@/lib/forms";
@@ -94,10 +96,13 @@ export function ReminderForm({ assessmentId }: { assessmentId: string }) {
           <ValidationMessage>{t("consentMissing")}</ValidationMessage>
         )}
       </div>
-      <div>
+      <div className={styles.submitRow}>
         <Button type="submit" disabled={pending} aria-busy={pending}>
           {t("submit")}
         </Button>
+        <Link asChild>
+          <NextLink href="/personvern">{t("privacyLink")}</NextLink>
+        </Link>
       </div>
     </form>
   );

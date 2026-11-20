@@ -45,6 +45,7 @@ function mockBrreg(status: number, body?: unknown) {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllEnvs();
 });
 
 describe("toCompany", () => {
@@ -98,6 +99,18 @@ describe("GET /api/companies/:orgNumber", () => {
     });
     expect(fetchMock).toHaveBeenCalledWith(
       `https://data.brreg.no/enhetsregisteret/api/enheter/${ORG_NUMBER}`,
+      expect.anything(),
+    );
+  });
+
+  it("asks the address in BRREG_API_URL when it is set", async () => {
+    vi.stubEnv("BRREG_API_URL", "http://brreg.test/api");
+    const fetchMock = mockBrreg(200, enkEnhet);
+
+    await request(app).get(`/api/companies/${ORG_NUMBER}`);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `http://brreg.test/api/enheter/${ORG_NUMBER}`,
       expect.anything(),
     );
   });

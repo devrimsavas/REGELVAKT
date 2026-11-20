@@ -12,7 +12,8 @@
     "assistant": "Assistent",
     "menu": "Hovedmeny",
     "about": "Om Regelvakt",
-    "contact": "Kontakt"
+    "contact": "Kontakt",
+    "privacy": "Personvern"
   },
   "footer": {
     "tagline": "Plikter og frister for små virksomheter, fra de offisielle kildene.",
@@ -143,7 +144,8 @@
     "daysMissing": "Velg minst ett tidspunkt.",
     "consentMissing": "Kryss av for at du vil få påminnelser.",
     "bankrupt": "Påminnelser kan ikke bestilles for en virksomhet som er konkurs: bostyreren har ansvaret for pliktene.",
-    "sendFailed": "E-posten kunne ikke sendes akkurat nå. Prøv igjen om litt."
+    "sendFailed": "E-posten kunne ikke sendes akkurat nå. Prøv igjen om litt.",
+    "privacyLink": "Les mer om personvern"
   },
   "calendar": {
     "title": "Fristene i kalenderen din",
@@ -273,5 +275,26 @@
     "portfolio": "Portefølje",
     "supportTitle": "Om brukerstøtte",
     "support": "Regelvakt er under utvikling, så det finnes ingen kundeservice ennå. Spørsmål om din egen skatt eller dine egne frister hører hjemme hos Skatteetaten eller Brønnøysundregistrene."
+  },
+  "privacy": {
+    "metaTitle": "Personvern",
+    "title": "Personvern",
+    "lead": "Regelvakt lagrer så lite som mulig, og bare så lenge det trengs. Det finnes ingen kontoer, ingen sporing og ingen reklame.",
+    "pageTitle": "Siden for virksomheten",
+    "page": "Når du slår opp en virksomhet, lagres organisasjonsnummeret, opplysningene om virksomheten fra Enhetsregisteret og svarene dine, slik at siden kan vises igjen fra lenken. For et enkeltpersonforetak er opplysningene fra registeret ofte innehaverens navn og adresse. Siden slettes når du sletter den, eller av seg selv når den ikke har vært åpnet på 30 dager og ingen påminnelser er bestilt.",
+    "remindersTitle": "Påminnelser på e-post",
+    "reminders": "Bestiller du påminnelser, lagres e-postadressen, når du vil ha påminnelser og hvilket språk e-postene skal ha, og en oversikt over hvilke påminnelser som er sendt, så ingen sendes to ganger. En adresse som ikke blir bekreftet, slettes når bekreftelseslenken går ut etter 48 timer. Alt slettes når du stopper påminnelsene eller sletter siden, og oversikten over sendte påminnelser slettes senest etter ett år.",
+    "assistantTitle": "Assistenten",
+    "assistant": "Spørsmålene til assistenten lagres ikke. For å skrive svaret sendes spørsmålet, sammen med Regelvakts regler for virksomheten, men uten navnet på den, til en språkmodell, som kan driftes av en ekstern leverandør. Skriv derfor ikke personopplysninger i spørsmålene.",
+    "othersTitle": "Hvem andre som får opplysninger",
+    "others": "Organisasjonsnummeret slås opp i Brønnøysundregistrenes åpne API. E-postene sendes gjennom e-posttjenesten Resend, som får adressen og innholdet i e-posten. Ingen opplysninger selges eller gis til andre.",
+    "cookiesTitle": "Informasjonskapsler",
+    "cookies": "Regelvakt bruker bare to informasjonskapsler: én som husker språket du har valgt, og én som husker lyst eller mørkt utseende. Ingen av dem brukes til sporing, og derfor spør vi ikke om samtykke.",
+    "logsTitle": "Logger",
+    "logs": "Serveren skriver hver forespørsel i en logg for å kunne finne feil: hvilken side, svaret og tiden det tok. Innholdet i skjemaer, spørsmål og e-postadresser skrives ikke i loggen. IP-adressen brukes for å begrense hvor mange forespørsler som kan komme fra én adresse. Den holdes bare i minnet så lenge grensen gjelder, høyst en time, og skrives ikke i loggen.",
+    "rightsTitle": "Dine valg",
+    "rights": "Du kan når som helst slette siden for virksomheten (under «Svarene dine») og stoppe påminnelsene (fra lenken i hver e-post). For spørsmål om personvern, ta kontakt.",
+    "owner": "Regelvakt er under utvikling og drives av {name}.",
+    "contact": "Ta kontakt"
   }
 }

@@ -2,7 +2,13 @@ import { toCompany } from "../mappers/companyMapper.js";
 import type { BrregEnhet } from "../types/brreg.js";
 import type { Company } from "../types/company.js";
 
-const BRREG_BASE_URL = "https://data.brreg.no/enhetsregisteret/api";
+// BRREG_API_URL points the lookups somewhere else: the end-to-end tests of
+// the web app use a stand-in with fictional companies
+function brregBaseUrl(): string {
+  return (
+    process.env.BRREG_API_URL || "https://data.brreg.no/enhetsregisteret/api"
+  );
+}
 const REQUEST_TIMEOUT_MS = 10_000;
 
 // Result of looking up one company in the register.
@@ -100,7 +106,7 @@ export async function lookupCompany(
 
   let response: Response;
   try {
-    response = await fetch(`${BRREG_BASE_URL}/enheter/${orgNumber}`, {
+    response = await fetch(`${brregBaseUrl()}/enheter/${orgNumber}`, {
       headers: { Accept: "application/json" },
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });

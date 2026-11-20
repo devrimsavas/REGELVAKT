@@ -79,3 +79,7 @@ DB_PORT=5432
 DB_NAME=regelvakt_test
 DB_USER=postgres
 DB_PASSWORD=
+
+# Where companies are looked up. Leave empty for Brønnøysundregistrene's
+# API; the web app's end-to-end tests point it at a stand-in.
+BRREG_API_URL=

@@ -12,7 +12,8 @@
     "assistant": "Assistant",
     "menu": "Main menu",
     "about": "About Regelvakt",
-    "contact": "Contact"
+    "contact": "Contact",
+    "privacy": "Privacy"
   },
   "footer": {
     "tagline": "Obligations and deadlines for small businesses, from the official sources.",
@@ -143,7 +144,8 @@
     "daysMissing": "Choose at least one.",
     "consentMissing": "Tick the box to say you want reminders.",
     "bankrupt": "Reminders cannot be ordered for a bankrupt business: the trustee is responsible for the obligations.",
-    "sendFailed": "The email could not be sent right now. Please try again in a moment."
+    "sendFailed": "The email could not be sent right now. Please try again in a moment.",
+    "privacyLink": "Read more about privacy"
   },
   "calendar": {
     "title": "The deadlines in your calendar",
@@ -273,5 +275,26 @@
     "portfolio": "Portfolio",
     "supportTitle": "About support",
     "support": "Regelvakt is under development, so there is no customer service yet. Questions about your own tax or deadlines belong with the Norwegian Tax Administration or the Brønnøysund Register Centre."
+  },
+  "privacy": {
+    "metaTitle": "Privacy",
+    "title": "Privacy",
+    "lead": "Regelvakt stores as little as possible, and only for as long as it is needed. There are no accounts, no tracking and no ads.",
+    "pageTitle": "The page for the business",
+    "page": "When you look a business up, the organization number, the information about the business from the Central Coordinating Register and your answers are stored, so the page can be shown again from its link. For a sole proprietorship, the information from the register is often the owner's name and address. The page is deleted when you delete it, or by itself when it has not been opened for 30 days and no reminders have been ordered.",
+    "remindersTitle": "Reminders by email",
+    "reminders": "If you order reminders, the email address, when you want reminders and the language of the emails are stored, with a record of which reminders have been sent, so none is sent twice. An address that is not confirmed is deleted when the confirmation link runs out after 48 hours. Everything is deleted when you stop the reminders or delete the page, and the record of sent reminders is deleted after a year at the latest.",
+    "assistantTitle": "The assistant",
+    "assistant": "Questions to the assistant are not stored. To write the answer, the question is sent, together with Regelvakt's rules for the business but without its name, to a language model, which may be run by an outside provider. So do not write personal details in your questions.",
+    "othersTitle": "Who else gets information",
+    "others": "The organization number is looked up in the Brønnøysund Register Centre's open API. The emails are sent through the email service Resend, which gets the address and the content of the email. No information is sold or given to anyone else.",
+    "cookiesTitle": "Cookies",
+    "cookies": "Regelvakt uses only two cookies: one that remembers the language you have chosen, and one that remembers light or dark appearance. Neither is used for tracking, which is why we do not ask for consent.",
+    "logsTitle": "Logs",
+    "logs": "The server writes each request to a log so errors can be found: which page, the answer and the time it took. The content of forms, questions and email addresses is not written to the log. The IP address is used to limit how many requests can come from one address. It is kept only in memory for as long as the limit lasts, an hour at most, and is not written to the log.",
+    "rightsTitle": "Your choices",
+    "rights": "You can delete the page for the business at any time (under “Your answers”) and stop the reminders (from the link in every email). For questions about privacy, get in touch.",
+    "owner": "Regelvakt is under development and run by {name}.",
+    "contact": "Get in touch"
   }
 }

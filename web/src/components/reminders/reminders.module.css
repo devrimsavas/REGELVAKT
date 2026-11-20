@@ -46,3 +46,10 @@
   flex-wrap: wrap;
   gap: var(--ds-size-3);
 }
+
+.submitRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ds-size-6);
+}
