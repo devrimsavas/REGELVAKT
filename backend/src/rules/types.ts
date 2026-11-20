@@ -86,14 +86,21 @@ export interface MonthDay {
 }
 
 // When an obligation is due. Deadlines that fall on a weekend or a public
-// holiday move to the next business day.
+// holiday move to the next business day, unless `fixed` is set.
 export type DeadlineSchedule =
   // Once a year on the same date, e.g. 31 May
-  | { kind: "annual"; date: MonthDay }
-  // On fixed dates through the year, e.g. the VAT terms
-  | { kind: "periodic"; dates: MonthDay[] }
-  // On the same day every month, e.g. the 5th
-  | { kind: "monthly"; day: number };
+  (
+    | { kind: "annual"; date: MonthDay }
+    // On fixed dates through the year, e.g. the VAT terms
+    | { kind: "periodic"; dates: MonthDay[] }
+    // On the same day every month, e.g. the 5th
+    | { kind: "monthly"; day: number }
+  ) & {
+    // The date holds on a weekend or a public holiday too. Used where the
+    // official source does not say the deadline moves: an early reminder
+    // costs nothing, a late one can cost a fee.
+    fixed?: true;
+  };
 
 export interface ObligationDefinition {
   id: string;

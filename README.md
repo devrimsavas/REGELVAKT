@@ -149,6 +149,7 @@ Every response carries an `X-Request-Id` header; the same id is in the API's log
 - [x] API: questions, `POST /api/assessments` and `GET /api/assessments/:id`, Swagger docs
 - [x] Source links checked one by one (19 Nov 2026) and filing links added where one service is used by everybody (rules version 2026.2)
 - [x] Warnings for companies that are bankrupt, under forced liquidation or being wound up
+- [ ] Ask Brønnøysundregistrene whether the annual accounts deadline moves to the next business day when 31 July is a Saturday or Sunday. Until they say it does, Regelvakt keeps 31 July (rules 2026.5)
 
 **Rule engine design**
 
@@ -156,7 +157,7 @@ Every response carries an `X-Request-Id` header; the same id is in the API's log
 - The engine is a pure function: company + answers + today's date → result. No database or network access.
 - _Facts_ combine Brreg data (organization form, VAT registration, employees as a hint) with answers (VAT term, expected sales, payroll, expected profit).
 - Each _question_ carries the condition for when it is asked; each _obligation_ carries `appliesTo`, a human readable `reason`, a deadline schedule, a link to its official source and, where there is one, a link to where it is filed (`filingUrl`; `null` when it is filed from an accounting system).
-- Deadline schedules: `annual`, `periodic` and `monthly`; deadlines on weekends and public holidays move to the next business day.
+- Deadline schedules: `annual`, `periodic` and `monthly`; deadlines on weekends and public holidays move to the next business day. A schedule marked `fixed` keeps its date: the annual accounts, where Brreg gives 31 July and a fee from 1 August without saying the deadline moves. An early reminder costs nothing; a late one can cost a fee.
 - Supported organization forms are listed in the rules (first version: ENK and AS); other forms get a clear "not supported yet" result.
 - `assessments` stores the organization number, a company snapshot, the answers and the rules version.
 
@@ -200,6 +201,7 @@ The first real question, "Når må jeg levere mva-meldingen?", got an answer tha
 - Every obligation has two short texts in Norwegian and English: who it applies to, and all its deadlines in words. A test reads the dates out of each text and checks that they are exactly the dates of the obligation's schedule, for every combination of answers, so the text cannot drift from the dates the reminders and the calendar use.
 - With an `assessmentId`, source [1] is that company: its obligations, why each applies, and its own dates for the next twelve months, already moved off weekends and holidays. The company's name is not sent to the model. Without one, source [1] lists every obligation with who it applies to and all its deadlines.
 - The model is told to take dates and deadlines from [1] and explanations from the pages, to name every deadline that can apply, and to say so when a page gives another date than [1]. Sources carry `kind: "rules"` or `kind: "page"`.
+- A date the rules moved off a weekend or a holiday carries the date it came from: "12. april 2027 (flyttet fra lørdag 10. april)". Without it, the model took the moved date and a page's own date for a contradiction, and the model is now told it is not one.
 - When no model answers, only the page sections are shown, as before: an excerpt of the rules would say less than the assessment page itself.
 - Five page sections instead of six, and Ollama is asked for a context window of 8192 tokens: its default (2048 or 4096, depending on the version) cuts long sources off without telling.
 - A Skatteetaten page with the two-month deadline table was looked for, to add to the knowledge base. Only third-party pages (banks, accounting firms) were found with the table. Skatteetaten has a deadline calendar, one tailored to each business after login, and a "Frister" API for accounting system vendors, but no page of theirs with the table could be found and checked. No unchecked page was added: the rules carry those dates instead.
@@ -281,6 +283,7 @@ The first real question, "Når må jeg levere mva-meldingen?", got an answer tha
 - Email sent to Skatteetaten about reusing their guidance (19 November); waiting for an answer
 - The rules became source [1] of the assistant (rules 2026.4: who each obligation applies to and its deadlines in words, checked against the schedules by a test); `npm run eval:answers` to measure the answers
 - Answer quality: 10 of 10 with `gemma4:12b` after turning its thinking off, which had filled the context window and left one answer in each run empty (table under Phase 3)
+- Tested through the API: a company's question showed the annual accounts as "2 August 2027 in [1], 31 July on the pages". Rules 2026.5: the annual accounts stay on 31 July (Brreg does not say the deadline moves; to be asked), and moved dates carry the date they came from
 
 ## Disclaimer
 

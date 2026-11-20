@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import { fromIsoDate, makeDate } from "../src/rules/calendar.js";
 import { OBLIGATIONS } from "../src/rules/obligations.js";
 import { QUESTIONS } from "../src/rules/questions.js";
-import { deadlinesBetween, upcomingDeadlines } from "../src/rules/schedule.js";
+import {
+  deadlinesBetween,
+  upcomingDeadlineDetails,
+  upcomingDeadlines,
+} from "../src/rules/schedule.js";
 import type { CompanyFacts, Facts } from "../src/rules/types.js";
 import { WARNINGS } from "../src/rules/warnings.js";
 
@@ -213,6 +217,28 @@ describe("upcomingDeadlines", () => {
     expect(upcomingDeadlines(schedule, fromIsoDate("2026-12-15"))[0]).toBe(
       "2026-12-15",
     );
+  });
+  it("keeps the annual accounts on 31 July when it is a Saturday", () => {
+    const schedule = obligation("annual-accounts").schedule(facts(as));
+    if (!schedule) throw new Error("no schedule");
+    // 31 July 2027 is a Saturday; other deadlines would move to 2 August
+    expect(upcomingDeadlines(schedule, fromIsoDate("2026-11-20"))).toEqual([
+      "2027-07-31",
+    ]);
+  });
+
+  it("tells the date a deadline was moved from", () => {
+    const schedule = obligation("vat-return").schedule(
+      facts(enk, { vatTerm: "bimonthly" }),
+    );
+    if (!schedule) throw new Error("no schedule");
+    const details = upcomingDeadlineDetails(
+      schedule,
+      fromIsoDate("2027-03-01"),
+    );
+    // 10 April 2027 is a Saturday
+    expect(details[0]).toEqual({ date: "2027-04-12", nominal: "2027-04-10" });
+    expect(details[1]).toEqual({ date: "2027-06-10", nominal: "2027-06-10" });
   });
 });
 

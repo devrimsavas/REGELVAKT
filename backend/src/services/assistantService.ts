@@ -154,6 +154,7 @@ function answerPrompt(language: EmailLanguage, context: CompanyContext | null) {
     "Du er Regelvakt, en veiviser for små virksomheter i Norge.",
     "Svar på spørsmålet bare ut fra kildene under. Bruk ikke annen kunnskap.",
     "Kilde [1] er Regelvakts regler. Ta datoer og frister fra [1]. Bruk de andre kildene til å forklare.",
+    "En dato i [1] kan være flyttet fra en helg eller helligdag; da står den opprinnelige datoen i parentes. Det er ikke en motstrid med en kilde som oppgir den opprinnelige datoen.",
     "Oppgir en annen kilde en annen dato enn [1] for det samme, si fra om det og vis til begge kildene.",
     "Gjelder spørsmålet en plikt med flere mulige frister, nevn alle fristene som kan gjelde.",
     "Sett kildens nummer i hakeparentes etter hver opplysning, for eksempel [1] eller [2][3].",
@@ -190,9 +191,16 @@ export function citedNumbers(answer: string, count: number): Set<number> {
 }
 
 // Removes references to sources that do not exist, such as [9] when there
-// were six
+// were six. A list in one bracket, "[1, 3]", is split into "[1][3]" first:
+// models write it both ways.
 function withoutUnknownSources(answer: string, count: number): string {
   return answer
+    .replace(/\[(\d+(?:\s*,\s*\d+)+)\]/g, (_whole, list: string) =>
+      list
+        .split(",")
+        .map((number) => `[${number.trim()}]`)
+        .join(""),
+    )
     .replace(/\[(\d+)\]/g, (whole, number: string) =>
       Number(number) >= 1 && Number(number) <= count ? whole : "",
     )
@@ -284,6 +292,7 @@ export async function ask(input: Question): Promise<AssistantAnswer> {
       });
       const count = hits.length + 1;
       const answer = withoutUnknownSources(raw, count);
+
       if (answer) {
         const cited = citedNumbers(answer, count);
         return {

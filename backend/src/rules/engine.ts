@@ -40,7 +40,7 @@ export function windingUpOf(company: Company): WindingUp | null {
   return null;
 }
 
-function toFacts(company: CompanyFacts, answers: Answers): Facts {
+export function toFacts(company: CompanyFacts, answers: Answers): Facts {
   return {
     ...company,
     vatTerm: answers.vatTerm ?? null,

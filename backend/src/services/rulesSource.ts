@@ -13,8 +13,13 @@
 // Norwegian, like the pages; the title and the excerpt shown to the user
 // are in the user's language.
 import type { EmailLanguage } from "../models/Subscription.js";
-import { assess, toCompanyFacts } from "../rules/engine.js";
+import { fromIsoDate } from "../rules/calendar.js";
+import { assess, toCompanyFacts, toFacts } from "../rules/engine.js";
 import { OBLIGATIONS } from "../rules/obligations.js";
+import {
+  type DeadlineDetail,
+  upcomingDeadlineDetails,
+} from "../rules/schedule.js";
 import type { Answers, IsoDate } from "../rules/types.js";
 import { RULES_VERSION } from "../rules/version.js";
 import type { Company } from "../types/company.js";
@@ -45,15 +50,39 @@ const MONTHS_NB = [
   "desember",
 ];
 
+const WEEKDAYS_NB = [
+  "søndag",
+  "mandag",
+  "tirsdag",
+  "onsdag",
+  "torsdag",
+  "fredag",
+  "lørdag",
+];
+
 // 2026-12-10 -> "10. desember 2026"
 export function formatDateNb(isoDate: IsoDate): string {
   const [year, month, day] = isoDate.split("-").map(Number);
   return `${day}. ${MONTHS_NB[(month ?? 1) - 1]} ${year}`;
 }
 
+// A deadline, with the date it was moved from when the rules moved it:
+// "2. august 2027 (flyttet fra lørdag 31. juli)". Without that, the model
+// took a moved date and the pages' own date for a contradiction.
+export function formatDeadlineNb(deadline: DeadlineDetail): string {
+  const date = formatDateNb(deadline.date);
+  if (deadline.date === deadline.nominal) return date;
+  const nominal = fromIsoDate(deadline.nominal);
+  const weekday = nominal.getUTCDay();
+  const why =
+    weekday === 0 || weekday === 6 ? WEEKDAYS_NB[weekday] : "helligdagen";
+  const [, month, day] = deadline.nominal.split("-").map(Number);
+  return `${date} (flyttet fra ${why} ${day}. ${MONTHS_NB[(month ?? 1) - 1]})`;
+}
+
 const INTRO = [
   `Regelvakts regler (versjon ${RULES_VERSION}), kontrollert mot Skatteetatens og Brønnøysundregistrenes sider.`,
-  "Faller en frist på en lørdag, søndag eller helligdag, flyttes den til neste virkedag.",
+  "De fleste fristene flyttes til neste virkedag når de faller på en lørdag, søndag eller helligdag.",
 ].join(" ");
 
 const TEXT = {
@@ -136,10 +165,11 @@ export function companyRulesSource(
 ): RulesSource {
   const company = assessment.companySnapshot;
   // A form the rules do not cover gets the general rules, which say so
-  if (toCompanyFacts(company) === null) return generalRulesSource(language);
-
+  const companyFacts = toCompanyFacts(company);
   const result = assess(company, assessment.answers, today);
-  if (!result.supported) return generalRulesSource(language);
+  if (companyFacts === null || !result.supported)
+    return generalRulesSource(language);
+  const facts = toFacts(companyFacts, assessment.answers);
 
   const t = TEXT[language];
   const form =
@@ -155,9 +185,11 @@ export function companyRulesSource(
   // term is known), or that there is no fixed one (bookkeeping).
   const blocks = result.obligations.map((obligation) => {
     const definition = OBLIGATIONS.find((d) => d.id === obligation.id);
+    const schedule = definition?.schedule(facts) ?? null;
+    const details = schedule ? upcomingDeadlineDetails(schedule, today) : [];
     const deadlines =
-      obligation.upcomingDeadlines.length > 0
-        ? `Fristene de neste tolv månedene: ${obligation.upcomingDeadlines.map(formatDateNb).join(", ")}.`
+      details.length > 0
+        ? `Fristene de neste tolv månedene: ${details.map(formatDeadlineNb).join(", ")}.`
         : `Frister: ${definition?.deadlineText.nb ?? "ukjent"}`;
     return [
       obligation.title.nb,
@@ -178,7 +210,7 @@ export function companyRulesSource(
     excerpt: t.companyExcerpt(result.obligations.length),
     text: [
       INTRO,
-      `Foretaket: ${form}, ${vat}. Dagens dato: ${formatDateNb(today.toISOString().slice(0, 10))}. Datoene under er allerede flyttet til virkedager.`,
+      `Foretaket: ${form}, ${vat}. Dagens dato: ${formatDateNb(today.toISOString().slice(0, 10))}. Der en dato under er flyttet fra en helg eller helligdag, står den opprinnelige datoen i parentes.`,
       ...answersLine(assessment.answers),
       ...warnings,
       ...blocks,

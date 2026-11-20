@@ -161,6 +161,17 @@ describe("POST /api/assistant/ask with a language model", () => {
 
     expect(res.body.answer).toBe("Fristen er 10. april [2].");
   });
+  it("reads a list of sources in one bracket", async () => {
+    fakeModel({
+      terms: ["mva-melding"],
+      answer: "Fristen er 10. april [1, 2, 9].",
+    });
+
+    const res = await ask({ question: "Når er mva-fristen?" });
+
+    expect(res.body.answer).toBe("Fristen er 10. april [1][2].");
+    expect(res.body.sources[1]).toMatchObject({ number: 2, cited: true });
+  });
 
   it("answers in English when asked", async () => {
     const requests = fakeModel({
@@ -269,6 +280,7 @@ describe("POST /api/assistant/ask with the rules as source [1]", () => {
     const prompt = requests[1]?.messages.at(-1)?.content ?? "";
     expect(system).toContain("Ta datoer og frister fra [1]");
     expect(system).toContain("si fra om det og vis til begge kildene");
+    expect(system).toContain("Det er ikke en motstrid");
     expect(prompt).toContain("mai–juni innen 31. august");
     expect(prompt).toContain("Årstermin: innen 10. mars året etter");
     expect(prompt).toContain("Gjelder: Alle som betaler lønn.");
@@ -291,7 +303,7 @@ describe("POST /api/assistant/ask with the rules as source [1]", () => {
     const prompt = requests[1]?.messages.at(-1)?.content ?? "";
     expect(prompt).toContain("Enkeltpersonforetak (ENK), registrert i");
     expect(prompt).toContain(
-      "Fristene de neste tolv månedene: 10. desember 2026, 10. februar 2027, 12. april 2027,",
+      "Fristene de neste tolv månedene: 10. desember 2026, 10. februar 2027, 12. april 2027 (flyttet fra lørdag 10. april),",
     );
     expect(prompt).toContain("Leverer mva-melding annenhver måned");
     // Only the company's own term, not the annual one

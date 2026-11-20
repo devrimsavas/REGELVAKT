@@ -14,6 +14,7 @@ import type {
 import {
   companyRulesSource,
   formatDateNb,
+  formatDeadlineNb,
   generalRulesSource,
 } from "../src/services/rulesSource.js";
 import { enkAnswers, enkEnhet } from "./helpers/assessments.js";
@@ -188,7 +189,38 @@ describe("the rules as the assistant's source", () => {
       "nb",
     );
     expect(source.text).toContain(
-      "Fristene de neste tolv månedene: 12. april 2027,",
+      "Fristene de neste tolv månedene: 12. april 2027 (flyttet fra lørdag 10. april),",
+    );
+  });
+
+  it("says where a deadline was moved from", () => {
+    expect(
+      formatDeadlineNb({ date: "2026-12-10", nominal: "2026-12-10" }),
+    ).toBe("10. desember 2026");
+    expect(
+      formatDeadlineNb({ date: "2027-05-18", nominal: "2027-05-15" }),
+    ).toBe("18. mai 2027 (flyttet fra lørdag 15. mai)");
+    expect(
+      formatDeadlineNb({ date: "2027-05-18", nominal: "2027-05-17" }),
+    ).toBe("18. mai 2027 (flyttet fra helligdagen 17. mai)");
+  });
+
+  it("keeps the annual accounts on 31 July, also on a Saturday", () => {
+    // 31 July 2027 is a Saturday
+    const source = companyRulesSource(
+      {
+        id: "x",
+        companySnapshot: {
+          ...toCompany(enkEnhet),
+          organizationForm: "AS",
+        },
+        answers: { vatTerm: "bimonthly", paysSalary: false },
+      },
+      new Date("2026-11-20T00:00:00Z"),
+      "nb",
+    );
+    expect(source.text).toContain(
+      "Årsregnskap til Regnskapsregisteret\nHvorfor: Alle aksjeselskap er regnskapspliktige og må sende inn årsregnskap.\nFristene de neste tolv månedene: 31. juli 2027.",
     );
   });
 });

@@ -347,8 +347,8 @@ export const OBLIGATIONS: ObligationDefinition[] = [
       en: "Limited companies; every limited company must keep accounts.",
     },
     deadlineText: {
-      nb: "Sendes inn senest én måned etter at generalforsamlingen har fastsatt det, og senest 31. juli for å unngå forsinkelsesgebyr.",
-      en: "Submitted no later than one month after the general meeting has approved it, and by 31 July to avoid a late filing fee.",
+      nb: "Sendes inn senest én måned etter at generalforsamlingen har fastsatt det, og senest 31. juli for å unngå forsinkelsesgebyr. Regelvakt regner med 31. juli også når det er en lørdag eller søndag, fordi Brønnøysundregistrene ikke sier at fristen flyttes.",
+      en: "Submitted no later than one month after the general meeting has approved it, and by 31 July to avoid a late filing fee. Regelvakt keeps 31 July even when it is a Saturday or Sunday, because the Brønnøysund Register Centre does not say the deadline moves.",
     },
     sourceUrl: URLS.annualAccounts,
     filingUrl: FILING_URLS.annualAccounts,
@@ -357,7 +357,14 @@ export const OBLIGATIONS: ObligationDefinition[] = [
       nb: "Alle aksjeselskap er regnskapspliktige og må sende inn årsregnskap.",
       en: "Every limited company is required to keep accounts and submit annual accounts.",
     }),
-    schedule: () => ({ kind: "annual", date: { month: 7, day: 31 } }),
+    // Brreg gives 31 July and a fee from 1 August, and does not say the
+    // deadline moves when 31 July is a Saturday or Sunday. Until it does,
+    // the earlier date is shown: an early reminder costs nothing.
+    schedule: () => ({
+      kind: "annual",
+      date: { month: 7, day: 31 },
+      fixed: true,
+    }),
   },
   {
     id: "bookkeeping",
