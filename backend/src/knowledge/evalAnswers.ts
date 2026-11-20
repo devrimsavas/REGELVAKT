@@ -103,8 +103,10 @@ export const ANSWER_CHECKS: AnswerCheck[] = [
     language: "nb",
     about: ENK_BIMONTHLY_VAT,
     mustContain: [date(10, "desember")],
-    // The annual term does not apply to this company
-    mustNotContain: [date(10, "mars")],
+    // The annual term does not apply to this company. Naming it as what
+    // others can have is fine (the model is told to mention dates the pages
+    // give); calling it this company's next deadline is wrong.
+    mustNotContain: [/neste frist[^.]*\b10\.? mars/i],
   },
   {
     question: "Når er fristen for a-meldingen?",

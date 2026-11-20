@@ -535,6 +535,7 @@ describe("language model providers", () => {
       model: "qwen3",
       format: "json",
       stream: false,
+      think: false,
       // The default context window would cut the sources off
       options: { num_ctx: 8192 },
     });

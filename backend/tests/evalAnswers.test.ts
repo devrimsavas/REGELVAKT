@@ -63,10 +63,16 @@ describe("the answer checks", () => {
   it("catch a wrong date", () => {
     const check = ANSWER_CHECKS[2];
     if (!check) throw new Error("No company check");
-    const result = checkAnswer(
-      check,
-      "Neste frist er 10. desember 2026, eller 10. mars med årstermin.",
-    );
-    expect(result.forbidden).toHaveLength(1);
+    expect(
+      checkAnswer(check, "Din neste frist er 10. mars 2027 [1].").forbidden,
+    ).toHaveLength(1);
+    // A real answer: the right date, and the annual term named as what
+    // the pages say for others
+    expect(
+      checkAnswer(
+        check,
+        "Din neste frist for mva-melding er 10. desember 2026 [1]. Kilde [3] og [4] oppgir 10. mars som frist for de som har søkt om og fått innvilget årstermin.",
+      ),
+    ).toEqual({ missing: [], forbidden: [] });
   });
 });

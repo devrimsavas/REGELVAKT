@@ -1,4 +1,5 @@
 import { Ollama } from "ollama";
+import { logger } from "../../config/logger.js";
 import {
   type ChatRequest,
   type LlmProvider,
@@ -48,12 +49,31 @@ export class OllamaProvider implements LlmProvider {
         messages: request.messages,
         ...(request.json ? { format: "json" } : {}),
         stream: false,
+        // No "thinking" before the answer: the model only reads the sources
+        // it is given. gemma4 could think until the context window was full
+        // and stop before writing any answer.
+        think: false,
         // Answers built on official sources: no creativity wanted.
         // Ollama's default context window (2048 or 4096 tokens, depending
         // on the version) cuts the sources off without telling; 8192 holds
         // the rules and five sections with room for the answer.
         options: { temperature: 0.1, num_ctx: OLLAMA_CONTEXT_TOKENS },
       });
+      if (!response.message.content) {
+        // Why Ollama gave no answer: a full context window, a stop for
+        // length, or everything written as "thinking" instead of the answer
+        logger.warn(
+          {
+            module: "ollama",
+            model: this.config.model,
+            doneReason: response.done_reason,
+            promptTokens: response.prompt_eval_count,
+            outputTokens: response.eval_count,
+            thinkingLength: response.message.thinking?.length ?? 0,
+          },
+          "Ollama returned an empty answer",
+        );
+      }
       return response.message.content ?? "";
     } catch (error: unknown) {
       throw toLlmError(error, this.config);

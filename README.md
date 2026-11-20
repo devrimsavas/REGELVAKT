@@ -169,7 +169,7 @@ Every response carries an `X-Request-Id` header; the same id is in the API's log
 - [x] Questions are not stored or logged; limits per address and per day; answers cached for an hour
 - [x] Search quality measured with 30 real questions (`npm run eval:assistant`)
 - [x] Regelvakt's own rules are source [1] of every answer: the dates come from the rules, the explanations from the official pages
-- [ ] Answer quality measured with 10 questions and the facts each answer must and must not hold (`npm run eval:answers`; results below once run)
+- [x] Answer quality measured with 10 questions and the facts each answer must and must not hold (`npm run eval:answers`)
 - [ ] Skatteetaten's answer on reusing their guidance (asked by email on 19 November 2026; no answer yet). Needed before real users; if none has come by the report, the report says so
 
 **Search quality** (`npm run eval:assistant`, 30 questions, a right page among the first five sources, 19–20 November 2026, before the link correction below)
@@ -184,9 +184,14 @@ All four misses with `gemma4:12b` were missing sources, not search: the annual a
 
 **Answer quality** (`npm run eval:answers`: 10 questions, each with the dates a right answer must hold and the wrong ones it must not; two of them about a company, as of 20 November 2026; one with no answer in the sources, which must say so instead of guessing)
 
-| Model | Right answers | Time for 10 questions |
+| Model and setting | Right answers | Time for 10 questions |
 | --- | --- | --- |
-| `gemma4:12b`, local | not run yet | |
+| `gemma4:12b`, local, thinking on | 8–9 / 10 | about 3 minutes |
+| `gemma4:12b`, local, thinking off | 10 / 10 (100 %) | under half a minute |
+
+With thinking on, one question in each run came back empty, a different one each time. Ollama's own figures for it: a prompt of 2,707 tokens, then 5,482 tokens of "thinking" until the context window of 8,192 was full, and a stop for length before any answer was written. The assistant only reads the sources it is given and writes a few sentences, with the dates already worked out in [1], so the model is now asked not to think: no empty answers, the same answers otherwise, about seven times faster. An empty answer from Ollama is logged with those figures, and the assistant logs when it falls back to the sources because of one.
+
+One check was too strict at first: the answer about a sole proprietorship's next VAT deadline gave its own date (10 December 2026, from [1]) and added that the pages give 10 March for businesses that have been granted the annual term. That is what the model is told to do with dates from the pages, so the check now fails only an answer that calls 10 March the company's next deadline.
 
 **Rules as source [1]**
 
@@ -275,6 +280,7 @@ The first real question, "Når må jeg levere mva-meldingen?", got an answer tha
 - The crawler now reports source links that lead nowhere and pages it could not read text from, and reads the whole page when the content is not in `<main>`
 - Email sent to Skatteetaten about reusing their guidance (19 November); waiting for an answer
 - The rules became source [1] of the assistant (rules 2026.4: who each obligation applies to and its deadlines in words, checked against the schedules by a test); `npm run eval:answers` to measure the answers
+- Answer quality: 10 of 10 with `gemma4:12b` after turning its thinking off, which had filled the context window and left one answer in each run empty (table under Phase 3)
 
 ## Disclaimer
 

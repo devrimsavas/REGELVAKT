@@ -296,6 +296,12 @@ export async function ask(input: Question): Promise<AssistantAnswer> {
           disclaimer: t.disclaimer.answer,
         };
       }
+      // The question is not logged; the length tells an empty answer from
+      // one that only held unknown source numbers
+      log.warn(
+        { provider: provider.name, rawLength: raw.length },
+        "The language model gave an empty answer; showing the sources",
+      );
     } catch (error: unknown) {
       // The question itself is not logged: it may hold personal details
       log.error(
