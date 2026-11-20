@@ -40,6 +40,9 @@ ASSISTANT_DAILY_LIMIT=500
 # Milliseconds between two requests to the same site when the knowledge
 # base is read (be polite: keep it at 1000 or more)
 CRAWL_DELAY_MS=1000
+# "off" stops the weekly update of the knowledge base (npm run knowledge
+# still works); leave it out to keep the knowledge base up to date
+KNOWLEDGE_UPDATES=
 
 # Logging. LOG_FORMAT=pretty writes readable, coloured lines (needs the
 # pino-pretty dev dependency); leave it out on a server to get JSON lines.

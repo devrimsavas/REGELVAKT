@@ -55,3 +55,33 @@ jobs:
       # code compiled by tsc, so errors that only appear there fail the build.
       - name: Check that the compiled app loads
         run: node --input-type=module -e "await import('./dist/app.js')"
+
+  # Builds the image and starts it with its database as docker-compose.yml
+  # does, then waits until the API reports healthy: migrations ran and the
+  # database answers
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Settings for the run
+        run: |
+          cp docker.env_example .env
+          sed -i "s/^DB_PASSWORD=.*/DB_PASSWORD=ci-password/" .env
+          sed -i "s/^SUBSCRIPTION_SECRET=.*/SUBSCRIPTION_SECRET=ci-secret-that-is-at-least-32-characters/" .env
+          sed -i "s/^AI_PROVIDER=.*/AI_PROVIDER=/" .env
+          sed -i "s/^KNOWLEDGE_UPDATES=.*/KNOWLEDGE_UPDATES=off/" .env
+
+      - name: Build and start
+        run: docker compose up -d --build --wait --wait-timeout 120
+
+      - name: The API answers
+        run: curl --fail --silent http://127.0.0.1:3000/api/health
+
+      - name: Logs
+        if: always()
+        run: docker compose logs
+
+      - name: Stop
+        if: always()
+        run: docker compose down -v

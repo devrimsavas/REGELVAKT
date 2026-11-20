@@ -1,0 +1,13 @@
+# Only what the image build needs is sent to Docker: package files,
+# tsconfig.json and src/. Settings, secrets and local builds stay out.
+node_modules
+dist
+coverage
+tests
+swagger_output.json
+.env
+.env.*
+*.log
+vitest.config.ts
+biome.json
+env_example

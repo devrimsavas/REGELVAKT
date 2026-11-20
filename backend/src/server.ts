@@ -68,7 +68,13 @@ const server = async () => {
 
       // Background work
       startReminderJob();
-      startKnowledgeJob();
+      // KNOWLEDGE_UPDATES=off: the official pages are not read on their own
+      // (CI starts the app often and should not fetch them every time)
+      if (process.env.KNOWLEDGE_UPDATES === "off") {
+        logger.info("Knowledge base updates are off (KNOWLEDGE_UPDATES=off)");
+      } else {
+        startKnowledgeJob();
+      }
     });
 
     process.on("SIGTERM", () => void shutdown("SIGTERM"));

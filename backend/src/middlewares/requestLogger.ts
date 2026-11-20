@@ -28,8 +28,15 @@ export const requestLogger = pinoHttp({
     `${req.method} ${pathOf(req)} ${res.statusCode} ${Math.round(time)} ms`,
   customErrorMessage: (req, res) =>
     `${req.method} ${pathOf(req)} ${res.statusCode} failed`,
-  // The documentation's own files are not worth a line each
-  autoLogging: { ignore: (req) => (req.url ?? "").startsWith("/api/docs") },
+
+  // Not worth a line each: the documentation's own files, and the health
+  // check Docker makes every 30 seconds (a failed one logs an error itself)
+  autoLogging: {
+    ignore: (req) => {
+      const url = req.url ?? "";
+      return url.startsWith("/api/docs") || url.startsWith("/api/health");
+    },
+  },
   // The request and response objects themselves are not logged
   serializers: {
     req: () => undefined,
