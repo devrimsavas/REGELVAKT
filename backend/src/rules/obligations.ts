@@ -1,7 +1,8 @@
 // The obligations Regelvakt knows about, for ENK and AS.
 // Deadlines and rules verified against Skatteetaten and Brønnøysundregistrene
 // in November 2026 (see RULES_VERSION). Every source and filing link was
-// checked on 19 November 2026.
+// checked on 19 November 2026; the annual accounts and general meeting
+// links were corrected on 20 November 2026.
 import type { DeadlineSchedule, ObligationDefinition } from "./types.js";
 
 const URLS = {
@@ -23,8 +24,11 @@ const URLS = {
     "https://www.skatteetaten.no/bedrift-og-organisasjon/arbeidsgiver/arbeidsgiveravgift/betaling-av-forskuddstrekk-og-arbeidsgiveravgift/",
   shareholderRegister:
     "https://www.skatteetaten.no/skjema/rf-1086-aksjonarregisteroppgaven/",
-  annualAccounts: "https://www.brreg.no/bedrift/arsregnskap/",
-  generalMeeting: "https://lovdata.no/lov/1997-06-13-44/§5-5",
+  annualAccounts: "https://www.brreg.no/innsending-av-arsregnskap/",
+  // Brreg's own explanation; Lovdata's text of the law (aksjeloven § 5-5)
+  // does not allow automatic reading in its robots.txt
+  generalMeeting:
+    "https://www.brreg.no/aksjeselskap/generalforsamling-i-aksjeselskap/",
   bookkeeping:
     "https://www.skatteetaten.no/nn/bedrift-og-organisasjon/starte-og-drive/rutiner-regnskap-og-kassasystem/gode-rutiner-for-daglig-drift/regnskap/",
 } as const;
@@ -69,6 +73,14 @@ export const OBLIGATIONS: ObligationDefinition[] = [
       nb: "Skattemeldingen for enkeltpersonforetak er den samme som for privatpersoner, med næringsopplysninger i tillegg. Den leveres elektronisk.",
       en: "The tax return for a sole proprietorship is the personal tax return with business information added. It is filed electronically.",
     },
+    audience: {
+      nb: "Alle enkeltpersonforetak, også de uten omsetning.",
+      en: "Every sole proprietorship, also those without sales.",
+    },
+    deadlineText: {
+      nb: "Leveres innen 31. mai i året etter inntektsåret.",
+      en: "Filed by 31 May in the year after the income year.",
+    },
     sourceUrl: URLS.taxReturnEnk,
     filingUrl: null,
     appliesTo: (facts) => facts.organizationForm === "ENK",
@@ -85,6 +97,14 @@ export const OBLIGATIONS: ObligationDefinition[] = [
       nb: "Aksjeselskapet leverer sin egen skattemelding, via et regnskapssystem eller årsoppgjørsprogram.",
       en: "The limited company files its own tax return, through accounting or year-end software.",
     },
+    audience: {
+      nb: "Alle aksjeselskap, også de uten omsetning.",
+      en: "Every limited company, also those without sales.",
+    },
+    deadlineText: {
+      nb: "Leveres innen 31. mai i året etter inntektsåret.",
+      en: "Filed by 31 May in the year after the income year.",
+    },
     sourceUrl: URLS.taxReturnCompany,
     filingUrl: null,
     appliesTo: (facts) => facts.organizationForm === "AS",
@@ -100,6 +120,14 @@ export const OBLIGATIONS: ObligationDefinition[] = [
     description: {
       nb: "Skatten på overskuddet betales på forskudd i fire like terminer i løpet av året. Beløpet bestemmes av skattekortet ditt.",
       en: "Tax on the profit is paid in advance in four equal instalments during the year. The amount follows your tax card.",
+    },
+    audience: {
+      nb: "Enkeltpersonforetak som venter overskudd. Beløpet står på skattekortet.",
+      en: "Sole proprietorships that expect a profit. The amount is on the tax card.",
+    },
+    deadlineText: {
+      nb: "Betales i fire like terminer i inntektsåret: 15. mars, 15. juni, 15. september og 15. desember.",
+      en: "Paid in four equal instalments during the income year: 15 March, 15 June, 15 September and 15 December.",
     },
     sourceUrl: URLS.advanceTaxEnk,
     filingUrl: null,
@@ -126,6 +154,14 @@ export const OBLIGATIONS: ObligationDefinition[] = [
       nb: "Forskuddsskatten betales i to like terminer i året etter inntektsåret. Melding om beløpet kommer i januar.",
       en: "Advance tax is paid in two equal instalments in the year after the income year. The amount is announced in January.",
     },
+    audience: {
+      nb: "Aksjeselskap.",
+      en: "Limited companies.",
+    },
+    deadlineText: {
+      nb: "Betales i to like terminer i året etter inntektsåret: 15. februar og 15. april.",
+      en: "Paid in two equal instalments in the year after the income year: 15 February and 15 April.",
+    },
     sourceUrl: URLS.advanceTaxAs,
     filingUrl: null,
     appliesTo: (facts) => facts.organizationForm === "AS",
@@ -147,6 +183,14 @@ export const OBLIGATIONS: ObligationDefinition[] = [
     description: {
       nb: "Mva-meldingen viser hvor mye merverdiavgift som skal betales eller tilbakebetales. Betalingsfristen er den samme som leveringsfristen, og meldingen leveres også når omsetningen er null.",
       en: "The VAT return shows how much VAT is payable or refundable. Payment is due on the filing date, and the return is filed even when sales are zero.",
+    },
+    audience: {
+      nb: "Virksomheter som er registrert i Merverdiavgiftsregisteret. De fleste leverer annenhver måned (alminnelig termin); små virksomheter kan søke om å levere én gang i året (årstermin).",
+      en: "Businesses registered in the VAT register. Most file every two months (the ordinary term); small businesses can apply to file once a year (the annual term).",
+    },
+    deadlineText: {
+      nb: "Alminnelig termin, annenhver måned: januar–februar innen 10. april, mars–april innen 10. juni, mai–juni innen 31. august, juli–august innen 10. oktober, september–oktober innen 10. desember, november–desember innen 10. februar året etter. Årstermin: innen 10. mars året etter. Betalingsfristen er den samme som leveringsfristen.",
+      en: "Ordinary term, every two months: January–February by 10 April, March–April by 10 June, May–June by 31 August, July–August by 10 October, September–October by 10 December, November–December by 10 February the year after. Annual term: by 10 March the year after. Payment is due on the same date as the return.",
     },
     sourceUrl: URLS.vatReturn,
     filingUrl: FILING_URLS.vatReturn,
@@ -180,6 +224,14 @@ export const OBLIGATIONS: ObligationDefinition[] = [
       nb: "A-meldingen rapporterer lønn, forskuddstrekk og arbeidsgiveravgift hver måned, og status på arbeidsforhold også i måneder uten lønn.",
       en: "The a-melding reports salaries, withholding tax and employer's contribution every month, and employment status even in months without pay.",
     },
+    audience: {
+      nb: "Alle som betaler lønn.",
+      en: "Everyone who pays salaries.",
+    },
+    deadlineText: {
+      nb: "Leveres innen den 5. hver måned, for måneden før.",
+      en: "Filed by the 5th of every month, for the month before.",
+    },
     sourceUrl: URLS.aMelding,
     filingUrl: FILING_URLS.aMelding,
     appliesTo: (facts) => facts.paysSalary === true,
@@ -198,6 +250,14 @@ export const OBLIGATIONS: ObligationDefinition[] = [
     description: {
       nb: "Arbeidsgiveravgiften for de to foregående månedene betales annenhver måned. Forskuddstrekket betales senest første virkedag etter hver lønnsutbetaling.",
       en: "Employer's contribution for the two previous months is paid every other month. Withholding tax is paid no later than the first business day after each payday.",
+    },
+    audience: {
+      nb: "Alle som betaler lønn.",
+      en: "Everyone who pays salaries.",
+    },
+    deadlineText: {
+      nb: "Arbeidsgiveravgiften for de to foregående månedene betales 15. januar, 15. mars, 15. mai, 15. juli, 15. september og 15. november. Forskuddstrekket betales senest første virkedag etter hver lønnsutbetaling.",
+      en: "Employer's contribution for the two previous months is paid on 15 January, 15 March, 15 May, 15 July, 15 September and 15 November. Withholding tax is paid no later than the first business day after each payday.",
     },
     sourceUrl: URLS.employerContribution,
     filingUrl: null,
@@ -228,6 +288,14 @@ export const OBLIGATIONS: ObligationDefinition[] = [
       nb: "Oppgaven viser hvem som eier aksjene per 31. desember, og endringer, utbytte og kapitalendringer i løpet av året.",
       en: "The statement shows who owned the shares on 31 December, and changes, dividends and capital changes during the year.",
     },
+    audience: {
+      nb: "Aksjeselskap.",
+      en: "Limited companies.",
+    },
+    deadlineText: {
+      nb: "Leveres innen 31. januar i året etter inntektsåret.",
+      en: "Filed by 31 January in the year after the income year.",
+    },
     sourceUrl: URLS.shareholderRegister,
     filingUrl: null,
     appliesTo: (facts) => facts.organizationForm === "AS",
@@ -246,6 +314,14 @@ export const OBLIGATIONS: ObligationDefinition[] = [
     description: {
       nb: "Generalforsamlingen fastsetter årsregnskapet. Den holdes innen seks måneder etter regnskapsårets slutt; for små selskap kan den ofte holdes forenklet.",
       en: "The general meeting approves the annual accounts. It is held within six months after the end of the financial year; small companies can often hold it in a simplified form.",
+    },
+    audience: {
+      nb: "Aksjeselskap.",
+      en: "Limited companies.",
+    },
+    deadlineText: {
+      nb: "Holdes innen seks måneder etter at regnskapsåret er slutt, det vil si innen 30. juni når regnskapsåret er kalenderåret.",
+      en: "Held within six months after the end of the financial year, that is by 30 June when the financial year is the calendar year.",
     },
     sourceUrl: URLS.generalMeeting,
     filingUrl: null,
@@ -266,6 +342,14 @@ export const OBLIGATIONS: ObligationDefinition[] = [
       nb: "Årsregnskapet sendes inn senest én måned etter at det er fastsatt. For å unngå forsinkelsesgebyr må det være levert innen 31. juli.",
       en: "The annual accounts are submitted no later than one month after they are approved. To avoid a late filing fee they must be submitted by 31 July.",
     },
+    audience: {
+      nb: "Aksjeselskap; alle aksjeselskap er regnskapspliktige.",
+      en: "Limited companies; every limited company must keep accounts.",
+    },
+    deadlineText: {
+      nb: "Sendes inn senest én måned etter at generalforsamlingen har fastsatt det, og senest 31. juli for å unngå forsinkelsesgebyr.",
+      en: "Submitted no later than one month after the general meeting has approved it, and by 31 July to avoid a late filing fee.",
+    },
     sourceUrl: URLS.annualAccounts,
     filingUrl: FILING_URLS.annualAccounts,
     appliesTo: (facts) => facts.organizationForm === "AS",
@@ -281,6 +365,14 @@ export const OBLIGATIONS: ObligationDefinition[] = [
     description: {
       nb: "Alle inntekter og kostnader skal bokføres løpende, og kvitteringer og annen dokumentasjon skal tas vare på i fem år.",
       en: "All income and expenses must be recorded continuously, and receipts and other documentation must be kept for five years.",
+    },
+    audience: {
+      nb: "Alle næringsdrivende.",
+      en: "Every business.",
+    },
+    deadlineText: {
+      nb: "Ingen fast frist: inntekter og kostnader bokføres løpende, og dokumentasjonen oppbevares i fem år.",
+      en: "No fixed deadline: income and expenses are recorded continuously, and the documentation is kept for five years.",
     },
     sourceUrl: URLS.bookkeeping,
     filingUrl: null,

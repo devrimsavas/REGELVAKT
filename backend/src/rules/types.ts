@@ -99,6 +99,12 @@ export interface ObligationDefinition {
   id: string;
   title: LocalizedText;
   description: LocalizedText;
+  // Who the obligation applies to, in general terms. Given to the
+  // assistant, so it can answer for any company.
+  audience: LocalizedText;
+  // Every deadline the obligation can have, in words. Each date in it must
+  // be one of the schedule's dates (checked by tests/ruleTexts.test.ts).
+  deadlineText: LocalizedText;
   // The official page that explains the obligation
   sourceUrl: string;
   // Where it is filed or paid, when there is one service everybody uses;

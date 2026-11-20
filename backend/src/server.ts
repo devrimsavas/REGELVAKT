@@ -5,6 +5,7 @@ import app from "./app.js";
 import { sequelize } from "./config/database.js";
 import { logger } from "./config/logger.js";
 import { migrator } from "./config/migrator.js";
+import { startKnowledgeJob, stopKnowledgeJob } from "./jobs/knowledgeJob.js";
 import { startReminderJob, stopReminderJob } from "./jobs/reminderJob.js";
 import { subscriptionSecret } from "./utils/tokens.js";
 
@@ -17,8 +18,8 @@ let httpServer: Server | null = null;
 let shuttingDown = false;
 
 // On Ctrl+C (SIGINT) or a stop from Docker or the operating system
-// (SIGTERM): stop taking requests, let the ones in progress and a reminder
-// run that is going on finish, then close the database connections
+// (SIGTERM): stop taking requests, let the ones in progress, a reminder
+// run and a knowledge base update that are going on finish, then close the database connections
 async function shutdown(signal: string): Promise<void> {
   if (shuttingDown) return;
   shuttingDown = true;
@@ -37,7 +38,7 @@ async function shutdown(signal: string): Promise<void> {
       // Idle keep-alive connections would otherwise hold close() open
       httpServer.closeIdleConnections();
     });
-    await Promise.all([closed, stopReminderJob()]);
+    await Promise.all([closed, stopReminderJob(), stopKnowledgeJob()]);
     await sequelize.close();
     logger.info("Shut down");
     process.exit(0);
@@ -67,6 +68,7 @@ const server = async () => {
 
       // Background work
       startReminderJob();
+      startKnowledgeJob();
     });
 
     process.on("SIGTERM", () => void shutdown("SIGTERM"));

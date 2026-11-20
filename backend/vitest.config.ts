@@ -17,6 +17,10 @@ const testDefaults = {
   SUBSCRIPTION_SECRET: "test-secret-that-is-at-least-32-characters",
   EMAIL_PROVIDER: "log",
   WEB_APP_URL: "http://web.test",
+  // The crawler does not wait between requests to the fake sites
+  CRAWL_DELAY_MS: "0",
+  // No language model unless a test sets one
+  AI_PROVIDER: "",
 };
 
 export default defineConfig({

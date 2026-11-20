@@ -26,6 +26,11 @@ const doc = {
       description:
         "Email reminders before deadlines: subscribe, confirm, change, stop",
     },
+    {
+      name: "Assistant",
+      description:
+        "Questions answered from official pages, with numbered sources",
+    },
     { name: "General", description: "API status" },
   ],
 };

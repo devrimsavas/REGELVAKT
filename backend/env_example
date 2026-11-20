@@ -23,6 +23,24 @@ WEB_APP_URL=http://localhost:3001
 EMAIL_HOUR=7
 REMINDER_CHECK_MINUTES=15
 
+# Assistant. AI_PROVIDER is "ollama" or "gemini"; leave it empty and the
+# assistant answers with the most relevant official sections only.
+# Locally: Ollama with a model you have pulled (ollama pull qwen3).
+# Live: Gemini with a key from Google AI Studio. The free tier may use the
+# questions to improve Google's products; use a paid key for real users.
+AI_PROVIDER=ollama
+AI_TIMEOUT_SECONDS=60
+OLLAMA_HOST=http://localhost:11434
+OLLAMA_MODEL=gemma4:12b
+OLLAMA_API_KEY=
+GEMINI_API_KEY=
+GEMINI_MODEL=
+# Questions per day for everybody together: a ceiling on the model's cost
+ASSISTANT_DAILY_LIMIT=500
+# Milliseconds between two requests to the same site when the knowledge
+# base is read (be polite: keep it at 1000 or more)
+CRAWL_DELAY_MS=1000
+
 # Logging. LOG_FORMAT=pretty writes readable, coloured lines (needs the
 # pino-pretty dev dependency); leave it out on a server to get JSON lines.
 # LOG_LEVEL is the lowest level written: trace, debug, info, warn, error,
@@ -42,6 +60,8 @@ SUBSCRIPTIONS_PER_EMAIL=5
 # Calendar feeds, per client address. Higher than the others: calendar apps
 # such as Google Calendar fetch many users' calendars from shared addresses.
 CALENDAR_REQUESTS_PER_ADDRESS=5000
+# Questions to the assistant per hour, per client address
+ASSISTANT_QUESTIONS_PER_ADDRESS=30
 
 # Proxies whose X-Forwarded-For header is trusted for the client's address.
 # The default trusts this machine and private networks (the web app, Docker).

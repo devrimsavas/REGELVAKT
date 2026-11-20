@@ -106,3 +106,14 @@ export const calendarLimit = rateLimit({
   identifier: "calendar",
   handler: tooMany("Too many calendar requests. Try again later."),
 });
+
+// Questions to the assistant: each may call the language model, which has
+// limits and may cost money. There is also a daily ceiling for everybody
+// together (ASSISTANT_DAILY_LIMIT, in services/assistantService.ts).
+export const assistantLimit = rateLimit({
+  ...common,
+  windowMs: 60 * MINUTE,
+  limit: envLimit("ASSISTANT_QUESTIONS_PER_ADDRESS", 30),
+  identifier: "assistant",
+  handler: tooMany("Too many questions. Try again later."),
+});
