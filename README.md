@@ -1,6 +1,7 @@
 # Regelvakt
 
 [![CI](https://github.com/devrimsavas/REGELVAKT/actions/workflows/ci.yml/badge.svg)](https://github.com/devrimsavas/REGELVAKT/actions/workflows/ci.yml)
+
 Regelvakt shows small Norwegian businesses which official obligations apply to _their_ company, explains them in plain language, reminds them before deadlines, and answers questions with sources from official pages.
 
 > Status: early development (pilot). Not tax or accounting advice.
