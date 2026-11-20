@@ -27,8 +27,8 @@ function rulesTextFor(check: (typeof ANSWER_CHECKS)[number]): string {
 }
 
 describe("the answer checks", () => {
-  it("are ten", () => {
-    expect(ANSWER_CHECKS).toHaveLength(10);
+  it("are eleven", () => {
+    expect(ANSWER_CHECKS).toHaveLength(11);
   });
 
   // The question about fishing has nothing in the rules on purpose

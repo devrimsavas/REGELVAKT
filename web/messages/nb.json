@@ -8,7 +8,11 @@
     "skipLink": "Hopp til hovedinnholdet",
     "switchLanguage": "English",
     "switchLanguageLabel": "Change the language to English",
-    "colorScheme": "Bytt mellom lyst og mørkt utseende"
+    "colorScheme": "Bytt mellom lyst og mørkt utseende",
+    "assistant": "Assistent",
+    "menu": "Hovedmeny",
+    "about": "Om Regelvakt",
+    "contact": "Kontakt"
   },
   "footer": {
     "tagline": "Plikter og frister for små virksomheter, fra de offisielle kildene.",
@@ -17,7 +21,8 @@
     "brreg": "Brønnøysundregistrene",
     "opensInNewTab": "(åpnes i ny fane)",
     "notAdvice": "Regelvakt er ikke skatte- eller regnskapsrådgivning. Sjekk alltid kilden.",
-    "inDevelopment": "Regelvakt er under utvikling."
+    "inDevelopment": "Regelvakt er under utvikling.",
+    "pages": "Regelvakt"
   },
   "home": {
     "title": "Hvilke plikter og frister har virksomheten din?",
@@ -74,7 +79,6 @@
     "missing": "Velg et svar."
   },
   "assessment": {
-    "metaTitle": "Plikter og frister for {name}",
     "newSearch": "Søk etter en annen virksomhet",
     "updated": "Svarene er lagret, og pliktene og fristene under er regnet ut på nytt.",
     "saveLinkTitle": "Ta vare på lenken til denne siden",
@@ -89,31 +93,28 @@
     "warningSource": "Les mer",
     "nextTitle": "De neste fristene",
     "nextEmpty": "Ingen faste frister de neste tolv månedene.",
-    "obligationsTitle": "Pliktene til virksomheten",
-    "obligationsLead": "{count, plural, one {# plikt} other {# plikter}}, sortert etter neste frist.",
+    "obligationsLead": "{count, plural, one {# plikt} other {# plikter}}, sortert etter neste frist. Hver plikt viser hvorfor den gjelder for virksomheten.",
     "why": "Hvorfor",
     "nextDeadline": "Neste frist",
     "noFixedDeadline": "Ingen fast frist",
     "allDeadlines": "Alle frister de neste tolv månedene ({count})",
     "readMore": "Les mer hos kilden",
     "file": "Gå til innlevering",
-    "answersTitle": "Svarene dine",
-    "editAnswers": "Endre svarene",
     "deadlineColumn": "Frist",
     "obligationColumn": "Plikt",
     "rulesVersion": "Regelvakts regler, versjon {version}. Faller en frist på en helg eller helligdag, er den flyttet til neste virkedag, bortsett fra årsregnskapet.",
     "notFoundTitle": "Fant ikke siden",
-    "notFoundText": "Lenken er feil, eller siden er slettet."
+    "notFoundText": "Lenken er feil, eller siden er slettet.",
+    "pageTitle": "{tab} – {name}",
+    "allObligations": "Se alle pliktene ({count})",
+    "answersLead": "Svarene avgjør hvilke plikter og frister som gjelder. Endrer du dem, regnes alt ut på nytt, og påminnelser du har bestilt, følger de nye svarene.",
+    "deleteLead": "Sletter siden, svarene og alle påminnelser med e-postadressene deres.",
+    "dangerTitle": "Slette siden"
   },
   "when": {
     "today": "i dag",
     "tomorrow": "i morgen",
     "inDays": "om {days} dager"
-  },
-  "answersPage": {
-    "metaTitle": "Endre svarene for {name}",
-    "title": "Endre svarene",
-    "lead": "Pliktene og fristene for {name} regnes ut på nytt når du lagrer. Påminnelser du har bestilt, følger de nye svarene."
   },
   "apiErrors": {
     "unreachable": "Regelvakt får ikke kontakt med tjenesten sin akkurat nå. Prøv igjen om litt.",
@@ -125,5 +126,152 @@
     "notSupported": "Regelvakt gjelder foreløpig bare enkeltpersonforetak og aksjeselskap.",
     "invalidAnswers": "Svarene passer ikke til spørsmålene lenger. Last siden på nytt og svar igjen.",
     "unexpected": "Noe gikk galt. Prøv igjen om litt."
+  },
+  "reminders": {
+    "title": "Påminnelser på e-post",
+    "lead": "Få en e-post før hver frist. Du bekrefter adressen først, og hver e-post har en lenke for å endre eller stoppe påminnelsene.",
+    "email": "E-postadresse",
+    "days": "Når vil du få påminnelser?",
+    "daysDescription": "Velg én eller flere.",
+    "day": "{days, plural, one {# dag før} other {# dager før}}",
+    "consent": "Jeg vil få påminnelser om fristene til denne virksomheten på e-post.",
+    "consentDescription": "Regelvakt lagrer bare e-postadressen og valgene dine, og sletter dem når du stopper påminnelsene eller sletter siden. Adressen brukes ikke til noe annet.",
+    "submit": "Bestill påminnelser",
+    "sentTitle": "Sjekk e-posten din",
+    "sentText": "Hvis adressen kan få påminnelser, får du nå en e-post med en lenke. Påminnelsene starter når du har trykket på den. Lenken virker i 48 timer.",
+    "emailInvalid": "Skriv inn en gyldig e-postadresse.",
+    "daysMissing": "Velg minst ett tidspunkt.",
+    "consentMissing": "Kryss av for at du vil få påminnelser.",
+    "bankrupt": "Påminnelser kan ikke bestilles for en virksomhet som er konkurs: bostyreren har ansvaret for pliktene.",
+    "sendFailed": "E-posten kunne ikke sendes akkurat nå. Prøv igjen om litt."
+  },
+  "calendar": {
+    "title": "Fristene i kalenderen din",
+    "lead": "Abonner på fristene i Google Kalender, Outlook eller Apple Kalender. Kalenderen oppdateres av seg selv når fristene eller svarene endrer seg, og hver frist har et varsel tre dager før.",
+    "address": "Kalenderadresse",
+    "copy": "Kopier adressen",
+    "copied": "Adressen er kopiert",
+    "open": "Åpne i kalenderprogrammet",
+    "howTitle": "Slik legger du den til",
+    "google": "Google Kalender: «Andre kalendere» → «+» → «Fra nettadresse», og lim inn adressen.",
+    "outlook": "Outlook: «Legg til kalender» → «Abonner fra nettet», og lim inn adressen.",
+    "apple": "Apple Kalender: trykk «Åpne i kalenderprogrammet», eller «Arkiv» → «Nytt kalenderabonnement».",
+    "privacy": "Alle som har adressen, kan se fristene. Den inneholder ikke navnet ditt eller e-postadressen din.",
+    "download": "Last ned som fil (.ics)",
+    "downloadNote": "En nedlastet fil er en kopi som ikke oppdateres når fristene eller svarene endrer seg. Abonnementet over holder seg oppdatert."
+  },
+  "deletePage": {
+    "link": "Slett siden",
+    "title": "Slette siden?",
+    "metaTitle": "Slett siden for {name}",
+    "text": "Siden for {name}, svarene dine og alle påminnelser med e-postadressene deres slettes for godt. Kalenderabonnementet slutter å virke. Dette kan ikke angres.",
+    "confirm": "Slett for godt",
+    "cancel": "Avbryt",
+    "done": "Siden er slettet, sammen med svarene og påminnelsene."
+  },
+  "manage": {
+    "metaTitle": "Påminnelser",
+    "confirmTitle": "Bekreft påminnelsene",
+    "confirmText": "Trykk på knappen for å starte påminnelsene på e-post.",
+    "confirmButton": "Start påminnelsene",
+    "confirmed": "Påminnelsene er startet. Du får den første før neste frist.",
+    "title": "Påminnelser for {name}",
+    "sentTo": "Sendes til {email}",
+    "pending": "Adressen er ikke bekreftet ennå. Bruk lenken i e-posten fra Regelvakt.",
+    "language": "Språk i e-postene",
+    "save": "Lagre",
+    "saved": "Endringene er lagret.",
+    "seeDeadlines": "Se pliktene og fristene",
+    "stopTitle": "Stopp påminnelsene",
+    "stopText": "E-postadressen din slettes, og du får ingen flere påminnelser. Siden med fristene finnes fortsatt.",
+    "stopButton": "Stopp påminnelsene",
+    "stoppedTitle": "Påminnelsene er stoppet",
+    "stoppedText": "Du får ingen flere påminnelser, og e-postadressen din er slettet.",
+    "invalidTitle": "Lenken virker ikke",
+    "invalidText": "Lenken er feil eller for gammel, eller påminnelsene er allerede stoppet. En bekreftelseslenke virker i 48 timer; du kan bestille påminnelsene på nytt fra siden med fristene.",
+    "home": "Til forsiden"
+  },
+  "languages": {
+    "nb": "Norsk",
+    "en": "English"
+  },
+  "assistant": {
+    "metaTitle": "Spør om plikter og frister",
+    "title": "Spør om plikter og frister",
+    "lead": "Assistenten svarer ut fra Regelvakts regler og Skatteetatens og Brønnøysundregistrenes egne sider, og viser hvor hvert svar kommer fra.",
+    "companyTitle": "Spør om {name}",
+    "companyLead": "Assistenten kjenner pliktene og fristene på denne siden og svarer for denne virksomheten.",
+    "question": "Spørsmålet ditt",
+    "questionDescription": "Hvert spørsmål besvares for seg. Ikke skriv personopplysninger: spørsmålet sendes til en språkmodell. Det lagres ikke.",
+    "submit": "Spør",
+    "examples": "Eksempler",
+    "example1": "Når må jeg levere mva-meldingen?",
+    "example2": "Må et enkeltpersonforetak levere årsregnskap?",
+    "example3": "Hvor lenge må jeg ta vare på kvitteringer?",
+    "companyExample1": "Hva er neste frist, og hva må jeg gjøre?",
+    "companyExample2": "Hvorfor gjelder disse pliktene for meg?",
+    "companyExample3": "Hva skjer hvis jeg leverer for sent?",
+    "you": "Du spurte",
+    "answer": "Svar",
+    "excerptsOnly": "Ingen språkmodell svarte, så her er de mest relevante utdragene fra kildene.",
+    "thinking": "Assistenten leser kildene …",
+    "sources": "Kilder",
+    "cited": "Brukt i svaret",
+    "rulesSource": "Regelvakts egne regler, kontrollert mot de offisielle sidene",
+    "notReady": "Assistenten er ikke klar ennå: den leser de offisielle sidene. Prøv igjen om noen minutter.",
+    "noModel": "Ingen språkmodell er satt opp, så assistenten viser de mest relevante utdragene i stedet for å skrive et svar.",
+    "tooShort": "Skriv et spørsmål.",
+    "tooLong": "Spørsmålet kan være på høyst {max} tegn.",
+    "dailyLimit": "Assistenten har svart på så mange spørsmål som den kan i dag. Prøv igjen i morgen.",
+    "assistantName": "Assistenten"
+  },
+  "year": {
+    "title": "Året som kommer",
+    "lead": "Alle fristene de neste tolv månedene, måned for måned.",
+    "none": "Ingen frister"
+  },
+  "tabs": {
+    "label": "Sider for virksomheten",
+    "overview": "Oversikt",
+    "obligations": "Plikter",
+    "calendar": "Kalender",
+    "reminders": "Påminnelser",
+    "assistant": "Spør",
+    "answers": "Svarene dine",
+    "delete": "Slett siden"
+  },
+  "menu": {
+    "open": "Meny"
+  },
+  "about": {
+    "metaTitle": "Om Regelvakt",
+    "title": "Om Regelvakt",
+    "lead": "Regelvakt viser små virksomheter hvilke plikter og frister de har overfor Skatteetaten og Brønnøysundregistrene, ut fra organisasjonsnummeret og noen få svar.",
+    "whyTitle": "Hvorfor den finnes",
+    "why": "Det er krevende å vite hvilke frister som gjelder når man starter for seg selv: mva-melding, a-melding, forskuddsskatt, skattemelding, årsregnskap. Informasjonen finnes, men den er spredt over mange sider og skrevet for alle. Regelvakt samler det som gjelder for din virksomhet, med datoene for de neste tolv månedene.",
+    "howTitle": "Slik er reglene laget",
+    "how": "Pliktene og fristene er skrevet som regler i Regelvakt og kontrollert mot Skatteetatens og Brønnøysundregistrenes egne sider. Hver plikt lenker til siden den bygger på. Faller en frist på en helg eller helligdag, flyttes den til neste virkedag; årsregnskapet holdes på 31. juli, fordi Brønnøysundregistrene ikke sier at den fristen flyttes.",
+    "coversTitle": "Hva Regelvakt dekker",
+    "covers": "Enkeltpersonforetak og aksjeselskap. Andre organisasjonsformer, og plikter som bare gjelder enkelte bransjer, er ikke med ennå.",
+    "assistantTitle": "Assistenten",
+    "assistant": "Assistenten svarer ut fra Regelvakts regler og de offisielle sidene, og viser hvor hvert svar kommer fra. Spørsmålene lagres ikke, men de sendes til en språkmodell, så skriv ikke personopplysninger i dem.",
+    "notTitle": "Hva Regelvakt ikke er",
+    "not": "Regelvakt er ikke skatte- eller regnskapsrådgivning, og den er ikke tilknyttet Skatteetaten eller Brønnøysundregistrene. Sjekk alltid kilden, og snakk med en regnskapsfører før beslutninger med økonomiske følger.",
+    "projectTitle": "Om prosjektet",
+    "project": "Regelvakt er under utvikling og laget av en fullstack-utvikler i Norge.",
+    "projectName": "Regelvakt er under utvikling og laget av {name}, fullstack-utvikler i Norge.",
+    "contact": "Ta kontakt"
+  },
+  "contact": {
+    "metaTitle": "Kontakt",
+    "title": "Kontakt",
+    "lead": "Spørsmål, tilbakemeldinger eller ideer til Regelvakt? Jeg hører gjerne fra deg.",
+    "leadName": "Spørsmål, tilbakemeldinger eller ideer til Regelvakt? {name} hører gjerne fra deg.",
+    "email": "E-post",
+    "linkedin": "LinkedIn",
+    "linkedinText": "Profil og meldinger",
+    "portfolio": "Portefølje",
+    "supportTitle": "Om brukerstøtte",
+    "support": "Regelvakt er under utvikling, så det finnes ingen kundeservice ennå. Spørsmål om din egen skatt eller dine egne frister hører hjemme hos Skatteetaten eller Brønnøysundregistrene."
   }
 }

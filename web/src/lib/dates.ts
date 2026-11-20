@@ -45,3 +45,15 @@ export function formatDate(
     year: "numeric",
   }).format(dateForFormatting(date));
 }
+
+// "2026-12" -> "desember 2026" / "December 2026"
+export function formatMonth(
+  month: string,
+  locale: keyof typeof DATE_LOCALES,
+): string {
+  return new Intl.DateTimeFormat(DATE_LOCALES[locale], {
+    timeZone: "Europe/Oslo",
+    month: "long",
+    year: "numeric",
+  }).format(dateForFormatting(`${month}-15`));
+}

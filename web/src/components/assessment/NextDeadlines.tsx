@@ -8,6 +8,7 @@ import {
   TableHeaderCell,
   TableRow,
 } from "@digdir/designsystemet-react";
+import NextLink from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
 import type { IsoDate } from "@/lib/dates";
 import { nextDeadlines } from "@/lib/deadlines";
@@ -19,12 +20,15 @@ import { DeadlineDate } from "./DeadlineDate";
 // own further down
 const SHOWN = 6;
 
+// linkBase: the page with the obligation cards, which each row links to
 export async function NextDeadlines({
   obligations,
   today,
+  linkBase,
 }: {
   obligations: Obligation[];
   today: IsoDate;
+  linkBase: string;
 }) {
   const t = await getTranslations("assessment");
   const locale = await getLocale();
@@ -47,8 +51,10 @@ export async function NextDeadlines({
               <DeadlineDate date={date} today={today} />
             </TableCell>
             <TableCell>
-              <Link href={`#obligation-${obligation.id}`}>
-                {pick(obligation.title, locale)}
+              <Link asChild>
+                <NextLink href={`${linkBase}#obligation-${obligation.id}`}>
+                  {pick(obligation.title, locale)}
+                </NextLink>
               </Link>
             </TableCell>
           </TableRow>

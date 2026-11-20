@@ -1,15 +1,22 @@
-import { Heading, Paragraph } from "@digdir/designsystemet-react";
+import { Alert, Heading, Paragraph } from "@digdir/designsystemet-react";
 import { getTranslations } from "next-intl/server";
 import { SearchForm } from "@/components/SearchForm";
 import styles from "./page.module.css";
 
 const STEPS = ["step1", "step2", "step3"] as const;
 
-export default async function HomePage() {
+export default async function HomePage({ searchParams }: PageProps<"/">) {
+  const { deleted } = await searchParams;
   const t = await getTranslations("home");
+  const deleting = await getTranslations("deletePage");
 
   return (
     <div className="container">
+      {deleted === "1" && (
+        <Alert data-color="success" role="status" className={styles.notice}>
+          <Paragraph>{deleting("done")}</Paragraph>
+        </Alert>
+      )}
       <section className={styles.hero}>
         <Heading level={1} data-size="xl">
           {t("title")}

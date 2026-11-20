@@ -24,3 +24,39 @@
   color: var(--ds-color-neutral-text-subtle);
   max-width: 40rem;
 }
+
+.deleteLink {
+  margin-top: var(--ds-size-8);
+}
+
+/* The page below the tabs of an assessment */
+.tabContent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ds-size-6);
+  width: 100%;
+}
+
+.tabContent > * {
+  max-width: 100%;
+}
+
+.alertActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-size-3);
+  margin-top: var(--ds-size-3);
+}
+
+/* A heading with an icon before it, such as the assistant's */
+.iconHeading {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-size-3);
+}
+
+.iconHeading svg {
+  flex: none;
+  color: var(--ds-color-accent-text-subtle);
+}

@@ -17,8 +17,9 @@ import {
 } from "@digdir/designsystemet-react";
 import NextLink from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { startTransition, useActionState, useState } from "react";
+import { useActionState, useState } from "react";
 import type { QuestionsState } from "@/lib/actions";
+import { submitKeepingFields } from "@/lib/forms";
 import { pick } from "@/lib/localized";
 import type { Answers, Question } from "@/lib/types";
 import styles from "./QuestionsForm.module.css";
@@ -40,11 +41,8 @@ function toFormValue(value: Answers[string] | undefined): string {
   return value === undefined ? "" : String(value);
 }
 
-// The company's questions as groups of radio buttons. With JavaScript the
-// form is sent from onSubmit, not through the form's action: React empties
-// a form's fields after its action has run, and the answers should stay
-// chosen when the server sends the form back with a message. Without
-// JavaScript the browser sends it the usual way.
+// The company's questions as groups of radio buttons. The answers stay
+// chosen when the server sends the form back with a message.
 export function QuestionsForm({
   questions,
   answers = {},
@@ -83,11 +81,7 @@ export function QuestionsForm({
   return (
     <form
       action={formAction}
-      onSubmit={(event) => {
-        event.preventDefault();
-        const formData = new FormData(event.currentTarget);
-        startTransition(() => formAction(formData));
-      }}
+      onSubmit={submitKeepingFields(formAction)}
       noValidate
       className={styles.form}
     >

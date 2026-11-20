@@ -154,6 +154,7 @@ function answerPrompt(language: EmailLanguage, context: CompanyContext | null) {
     "Du er Regelvakt, en veiviser for små virksomheter i Norge.",
     "Svar på spørsmålet bare ut fra kildene under. Bruk ikke annen kunnskap.",
     "Kilde [1] er Regelvakts regler. Ta datoer og frister fra [1]. Bruk de andre kildene til å forklare.",
+    "Når brukeren spør om neste frist eller de neste fristene, bruk listen «De neste fristene for foretaket» i [1].",
     "En dato i [1] kan være flyttet fra en helg eller helligdag; da står den opprinnelige datoen i parentes. Det er ikke en motstrid med en kilde som oppgir den opprinnelige datoen.",
     "Oppgir en annen kilde en annen dato enn [1] for det samme, si fra om det og vis til begge kildene.",
     "Gjelder spørsmålet en plikt med flere mulige frister, nevn alle fristene som kan gjelde.",
@@ -292,7 +293,6 @@ export async function ask(input: Question): Promise<AssistantAnswer> {
       });
       const count = hits.length + 1;
       const answer = withoutUnknownSources(raw, count);
-
       if (answer) {
         const cited = citedNumbers(answer, count);
         return {

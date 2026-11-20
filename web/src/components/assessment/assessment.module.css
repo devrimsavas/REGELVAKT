@@ -109,3 +109,69 @@
 .answerRow {
   display: contents;
 }
+
+/* The year ahead: four months a row on wide screens */
+.year {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--ds-size-3);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 60rem) {
+  .year {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 36rem) {
+  .year {
+    grid-template-columns: 1fr;
+  }
+}
+
+.month {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-size-2);
+  padding: var(--ds-size-4);
+  border: 1px solid var(--ds-color-neutral-border-subtle);
+  border-radius: var(--ds-border-radius-md);
+  background: var(--ds-color-neutral-surface-default);
+}
+
+.monthName::first-letter {
+  text-transform: uppercase;
+}
+
+.noDeadlines {
+  color: var(--ds-color-neutral-text-subtle);
+  font-size: var(--ds-body-sm-font-size);
+}
+
+.monthDeadlines {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-size-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--ds-body-sm-font-size);
+}
+
+.monthDeadlines li {
+  display: grid;
+  grid-template-columns: 2.2em 1fr;
+}
+
+.monthDeadlines a {
+  color: var(--ds-color-neutral-text-default);
+}
+
+.day {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--ds-font-weight-semibold);
+}

@@ -23,6 +23,54 @@
   outline-offset: 4px;
 }
 
+.nav ul {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-size-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* flex, so each link is exactly as tall as its text and icon, and the
+   links sit in the middle of the header like the logo and the buttons */
+.nav li {
+  display: flex;
+}
+
+.nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-size-1);
+  color: var(--ds-color-neutral-text-default);
+  text-decoration: none;
+  font-weight: var(--ds-font-weight-medium);
+  border-radius: var(--ds-border-radius-sm);
+}
+
+.nav a svg {
+  font-size: 1.3em;
+  color: var(--ds-color-accent-text-subtle);
+}
+
+.nav a:hover {
+  color: var(--ds-color-accent-text-subtle);
+  text-decoration: underline;
+}
+
+.nav a:focus-visible {
+  outline: var(--dsc-focus-outline);
+  outline-offset: 2px;
+}
+
+/* The page the user is on */
+.nav a[aria-current="page"] {
+  color: var(--ds-color-accent-text-subtle);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.4em;
+}
+
 .actions {
   display: flex;
   align-items: center;
@@ -57,7 +105,23 @@
   display: none;
 }
 
-/* Phones: the language's short code instead of its name */
+.mobileMenu {
+  display: none;
+}
+
+/* Small screens: the links move into the menu */
+@media (max-width: 48rem) {
+  .nav {
+    display: none;
+  }
+
+  .mobileMenu {
+    display: block;
+  }
+}
+
+/* Phones: the language's short code instead of its name, and the menu
+   button without its text */
 @media (max-width: 36rem) {
   .inner {
     gap: var(--ds-size-2);
@@ -68,7 +132,8 @@
   }
 
   .languageIcon,
-  .languageName {
+  .languageName,
+  .menuText {
     display: none;
   }
 

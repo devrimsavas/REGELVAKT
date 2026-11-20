@@ -54,6 +54,18 @@ const ENK_BIMONTHLY_VAT: EvalCompany = {
   answers: { vatTerm: "bimonthly", paysSalary: false, expectsProfit: true },
 };
 
+// Pays salaries: the a-melding (5 December 2026 is a Saturday, so
+// 7 December) comes before the VAT return (10 December)
+const AS_WITH_SALARY: EvalCompany = {
+  company: {
+    ...BASE,
+    organizationForm: "AS",
+    organizationFormDescription: "Aksjeselskap",
+    businessRegisterRegistered: true,
+  },
+  answers: { vatTerm: "bimonthly", paysSalary: true },
+};
+
 const AS_WITHOUT_SALARY: EvalCompany = {
   company: {
     ...BASE,
@@ -107,6 +119,15 @@ export const ANSWER_CHECKS: AnswerCheck[] = [
     // others can have is fine (the model is told to mention dates the pages
     // give); calling it this company's next deadline is wrong.
     mustNotContain: [/neste frist[^.]*\b10\.? mars/i],
+  },
+  {
+    // Asked through the web app: the answer named the VAT return's
+    // 10 December, while the a-melding was due on 7 December
+    question: "Hva er neste frist, og hva må jeg gjøre?",
+    language: "nb",
+    about: AS_WITH_SALARY,
+    mustContain: [date(7, "desember")],
+    mustNotContain: [/neste frist[^.]*\b10\.? desember/i],
   },
   {
     question: "Når er fristen for a-meldingen?",

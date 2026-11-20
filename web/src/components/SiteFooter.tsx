@@ -1,4 +1,5 @@
 import { Link, Paragraph } from "@digdir/designsystemet-react";
+import NextLink from "next/link";
 import { getTranslations } from "next-intl/server";
 import { Logo } from "./Logo";
 import styles from "./SiteFooter.module.css";
@@ -11,6 +12,12 @@ const SOURCES = [
 
 export async function SiteFooter() {
   const t = await getTranslations("footer");
+  const header = await getTranslations("header");
+  const pagesLinks = [
+    { href: "/assistent", text: header("assistant") },
+    { href: "/om", text: header("about") },
+    { href: "/kontakt", text: header("contact") },
+  ];
 
   return (
     <footer className={styles.footer}>
@@ -19,6 +26,21 @@ export async function SiteFooter() {
           <Logo />
           <Paragraph data-size="sm">{t("tagline")}</Paragraph>
         </div>
+
+        <nav aria-labelledby="footer-pages">
+          <h2 id="footer-pages" className={styles.heading}>
+            {t("pages")}
+          </h2>
+          <ul className={styles.list}>
+            {pagesLinks.map((link) => (
+              <li key={link.href}>
+                <Link asChild>
+                  <NextLink href={link.href}>{link.text}</NextLink>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
         <nav aria-labelledby="footer-sources">
           <h2 id="footer-sources" className={styles.heading}>

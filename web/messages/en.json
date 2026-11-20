@@ -8,7 +8,11 @@
     "skipLink": "Skip to main content",
     "switchLanguage": "Norsk",
     "switchLanguageLabel": "Bytt språk til norsk",
-    "colorScheme": "Switch between light and dark appearance"
+    "colorScheme": "Switch between light and dark appearance",
+    "assistant": "Assistant",
+    "menu": "Main menu",
+    "about": "About Regelvakt",
+    "contact": "Contact"
   },
   "footer": {
     "tagline": "Obligations and deadlines for small businesses, from the official sources.",
@@ -17,7 +21,8 @@
     "brreg": "The Brønnøysund Register Centre",
     "opensInNewTab": "(opens in a new tab)",
     "notAdvice": "Regelvakt is not tax or accounting advice. Always check the source.",
-    "inDevelopment": "Regelvakt is under development."
+    "inDevelopment": "Regelvakt is under development.",
+    "pages": "Regelvakt"
   },
   "home": {
     "title": "Which obligations and deadlines does your business have?",
@@ -74,7 +79,6 @@
     "missing": "Choose an answer."
   },
   "assessment": {
-    "metaTitle": "Obligations and deadlines for {name}",
     "newSearch": "Search for another business",
     "updated": "The answers are saved, and the obligations and deadlines below have been worked out again.",
     "saveLinkTitle": "Keep the link to this page",
@@ -89,31 +93,28 @@
     "warningSource": "Read more",
     "nextTitle": "The next deadlines",
     "nextEmpty": "No fixed deadlines in the next twelve months.",
-    "obligationsTitle": "The business's obligations",
-    "obligationsLead": "{count, plural, one {# obligation} other {# obligations}}, by next deadline.",
+    "obligationsLead": "{count, plural, one {# obligation} other {# obligations}}, by next deadline. Each shows why it applies to the business.",
     "why": "Why",
     "nextDeadline": "Next deadline",
     "noFixedDeadline": "No fixed deadline",
     "allDeadlines": "All deadlines in the next twelve months ({count})",
     "readMore": "Read more at the source",
     "file": "Go to filing",
-    "answersTitle": "Your answers",
-    "editAnswers": "Change the answers",
     "deadlineColumn": "Deadline",
     "obligationColumn": "Obligation",
     "rulesVersion": "Regelvakt's rules, version {version}. A deadline on a weekend or public holiday has been moved to the next business day, except for the annual accounts.",
     "notFoundTitle": "Page not found",
-    "notFoundText": "The link is wrong, or the page has been deleted."
+    "notFoundText": "The link is wrong, or the page has been deleted.",
+    "pageTitle": "{tab} – {name}",
+    "allObligations": "See all obligations ({count})",
+    "answersLead": "The answers decide which obligations and deadlines apply. If you change them, everything is worked out again, and reminders you have ordered follow the new answers.",
+    "deleteLead": "Deletes the page, the answers and all reminders with their email addresses.",
+    "dangerTitle": "Delete the page"
   },
   "when": {
     "today": "today",
     "tomorrow": "tomorrow",
     "inDays": "in {days} days"
-  },
-  "answersPage": {
-    "metaTitle": "Change the answers for {name}",
-    "title": "Change the answers",
-    "lead": "The obligations and deadlines for {name} are worked out again when you save. Reminders you have ordered follow the new answers."
   },
   "apiErrors": {
     "unreachable": "Regelvakt cannot reach its service right now. Please try again in a moment.",
@@ -125,5 +126,152 @@
     "notSupported": "Regelvakt covers only sole proprietorships and limited companies for now.",
     "invalidAnswers": "The answers no longer fit the questions. Load the page again and answer again.",
     "unexpected": "Something went wrong. Please try again in a moment."
+  },
+  "reminders": {
+    "title": "Reminders by email",
+    "lead": "Get an email before each deadline. You confirm the address first, and every email has a link to change or stop the reminders.",
+    "email": "Email address",
+    "days": "When do you want reminders?",
+    "daysDescription": "Choose one or more.",
+    "day": "{days, plural, one {# day before} other {# days before}}",
+    "consent": "I want reminders about this business's deadlines by email.",
+    "consentDescription": "Regelvakt stores only the email address and your choices, and deletes them when you stop the reminders or delete the page. The address is not used for anything else.",
+    "submit": "Order reminders",
+    "sentTitle": "Check your email",
+    "sentText": "If the address can get reminders, an email with a link is on its way. The reminders start once you have used it. The link works for 48 hours.",
+    "emailInvalid": "Enter a valid email address.",
+    "daysMissing": "Choose at least one.",
+    "consentMissing": "Tick the box to say you want reminders.",
+    "bankrupt": "Reminders cannot be ordered for a bankrupt business: the trustee is responsible for the obligations.",
+    "sendFailed": "The email could not be sent right now. Please try again in a moment."
+  },
+  "calendar": {
+    "title": "The deadlines in your calendar",
+    "lead": "Subscribe to the deadlines in Google Calendar, Outlook or Apple Calendar. The calendar updates itself when the deadlines or the answers change, and every deadline has an alert three days before.",
+    "address": "Calendar address",
+    "copy": "Copy the address",
+    "copied": "The address is copied",
+    "open": "Open in the calendar app",
+    "howTitle": "How to add it",
+    "google": "Google Calendar: “Other calendars” → “+” → “From URL”, and paste the address.",
+    "outlook": "Outlook: “Add calendar” → “Subscribe from web”, and paste the address.",
+    "apple": "Apple Calendar: press “Open in the calendar app”, or “File” → “New Calendar Subscription”.",
+    "privacy": "Anyone with the address can see the deadlines. It holds neither your name nor your email address.",
+    "download": "Download as a file (.ics)",
+    "downloadNote": "A downloaded file is a copy that is not updated when the deadlines or the answers change. The subscription above stays up to date."
+  },
+  "deletePage": {
+    "link": "Delete the page",
+    "title": "Delete the page?",
+    "metaTitle": "Delete the page for {name}",
+    "text": "The page for {name}, your answers and all reminders with their email addresses are deleted for good. The calendar subscription stops working. This cannot be undone.",
+    "confirm": "Delete for good",
+    "cancel": "Cancel",
+    "done": "The page is deleted, together with the answers and the reminders."
+  },
+  "manage": {
+    "metaTitle": "Reminders",
+    "confirmTitle": "Confirm the reminders",
+    "confirmText": "Press the button to start the reminders by email.",
+    "confirmButton": "Start the reminders",
+    "confirmed": "The reminders have started. You get the first before the next deadline.",
+    "title": "Reminders for {name}",
+    "sentTo": "Sent to {email}",
+    "pending": "The address has not been confirmed yet. Use the link in the email from Regelvakt.",
+    "language": "Language of the emails",
+    "save": "Save",
+    "saved": "The changes are saved.",
+    "seeDeadlines": "See the obligations and deadlines",
+    "stopTitle": "Stop the reminders",
+    "stopText": "Your email address is deleted, and you get no more reminders. The page with the deadlines still exists.",
+    "stopButton": "Stop the reminders",
+    "stoppedTitle": "The reminders are stopped",
+    "stoppedText": "You get no more reminders, and your email address has been deleted.",
+    "invalidTitle": "The link does not work",
+    "invalidText": "The link is wrong or too old, or the reminders have already been stopped. A confirmation link works for 48 hours; you can order the reminders again from the page with the deadlines.",
+    "home": "To the front page"
+  },
+  "languages": {
+    "nb": "Norsk",
+    "en": "English"
+  },
+  "assistant": {
+    "metaTitle": "Ask about obligations and deadlines",
+    "title": "Ask about obligations and deadlines",
+    "lead": "The assistant answers from Regelvakt's rules and the pages of the Norwegian Tax Administration and the Brønnøysund Register Centre, and shows where each answer comes from.",
+    "companyTitle": "Ask about {name}",
+    "companyLead": "The assistant knows the obligations and deadlines on this page and answers for this business.",
+    "question": "Your question",
+    "questionDescription": "Each question is answered on its own. Do not write personal details: the question is sent to a language model. It is not stored.",
+    "submit": "Ask",
+    "examples": "Examples",
+    "example1": "When do I have to file the VAT return?",
+    "example2": "Does a sole proprietorship have to submit annual accounts?",
+    "example3": "How long must I keep receipts?",
+    "companyExample1": "What is the next deadline, and what must I do?",
+    "companyExample2": "Why do these obligations apply to me?",
+    "companyExample3": "What happens if I file late?",
+    "you": "You asked",
+    "answer": "Answer",
+    "excerptsOnly": "No language model answered, so here are the most relevant excerpts from the sources.",
+    "thinking": "The assistant is reading the sources …",
+    "sources": "Sources",
+    "cited": "Used in the answer",
+    "rulesSource": "Regelvakt's own rules, checked against the official pages",
+    "notReady": "The assistant is not ready yet: it is reading the official pages. Please try again in a few minutes.",
+    "noModel": "No language model is set up, so the assistant shows the most relevant excerpts instead of writing an answer.",
+    "tooShort": "Write a question.",
+    "tooLong": "The question can be at most {max} characters.",
+    "dailyLimit": "The assistant has answered as many questions as it can today. Please try again tomorrow.",
+    "assistantName": "The assistant"
+  },
+  "year": {
+    "title": "The year ahead",
+    "lead": "All deadlines in the next twelve months, month by month.",
+    "none": "No deadlines"
+  },
+  "tabs": {
+    "label": "Pages for the business",
+    "overview": "Overview",
+    "obligations": "Obligations",
+    "calendar": "Calendar",
+    "reminders": "Reminders",
+    "assistant": "Ask",
+    "answers": "Your answers",
+    "delete": "Delete the page"
+  },
+  "menu": {
+    "open": "Menu"
+  },
+  "about": {
+    "metaTitle": "About Regelvakt",
+    "title": "About Regelvakt",
+    "lead": "Regelvakt shows small businesses which obligations and deadlines they have towards the Norwegian Tax Administration and the Brønnøysund Register Centre, from the organization number and a few answers.",
+    "whyTitle": "Why it exists",
+    "why": "Knowing which deadlines apply is hard when you start on your own: the VAT return, the a-melding, advance tax, the tax return, the annual accounts. The information exists, but it is spread over many pages and written for everyone. Regelvakt gathers what applies to your business, with the dates for the next twelve months.",
+    "howTitle": "How the rules are made",
+    "how": "The obligations and deadlines are written as rules in Regelvakt and checked against the pages of the Norwegian Tax Administration and the Brønnøysund Register Centre. Each obligation links to the page it is based on. A deadline on a weekend or public holiday moves to the next business day; the annual accounts stay on 31 July, because the Brønnøysund Register Centre does not say that deadline moves.",
+    "coversTitle": "What Regelvakt covers",
+    "covers": "Sole proprietorships and limited companies. Other organization forms, and obligations that only apply to some industries, are not covered yet.",
+    "assistantTitle": "The assistant",
+    "assistant": "The assistant answers from Regelvakt's rules and the official pages, and shows where each answer comes from. Questions are not stored, but they are sent to a language model, so do not write personal details in them.",
+    "notTitle": "What Regelvakt is not",
+    "not": "Regelvakt is not tax or accounting advice, and it is not connected to the Norwegian Tax Administration or the Brønnøysund Register Centre. Always check the source, and talk to an accountant before decisions with financial consequences.",
+    "projectTitle": "About the project",
+    "project": "Regelvakt is under development and made by a full-stack developer in Norway.",
+    "projectName": "Regelvakt is under development and made by {name}, a full-stack developer in Norway.",
+    "contact": "Get in touch"
+  },
+  "contact": {
+    "metaTitle": "Contact",
+    "title": "Contact",
+    "lead": "Questions, feedback or ideas for Regelvakt? I would be glad to hear from you.",
+    "leadName": "Questions, feedback or ideas for Regelvakt? {name} would be glad to hear from you.",
+    "email": "Email",
+    "linkedin": "LinkedIn",
+    "linkedinText": "Profile and messages",
+    "portfolio": "Portfolio",
+    "supportTitle": "About support",
+    "support": "Regelvakt is under development, so there is no customer service yet. Questions about your own tax or deadlines belong with the Norwegian Tax Administration or the Brønnøysund Register Centre."
   }
 }

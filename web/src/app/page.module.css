@@ -49,3 +49,7 @@
     grid-template-columns: 1fr;
   }
 }
+
+.notice {
+  margin-top: var(--ds-size-8);
+}

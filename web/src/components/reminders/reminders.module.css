@@ -1,0 +1,48 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-size-6);
+  max-width: 40rem;
+}
+
+.email {
+  max-width: 28rem;
+}
+
+.consent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-size-2);
+}
+
+.calendar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-size-4);
+  max-width: 44rem;
+}
+
+.address {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--ds-size-3);
+}
+
+.address > :first-child {
+  flex: 1 1 20rem;
+}
+
+.steps {
+  margin: 0;
+  padding-left: var(--ds-size-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-size-2);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ds-size-3);
+}

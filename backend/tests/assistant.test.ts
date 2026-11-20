@@ -161,6 +161,7 @@ describe("POST /api/assistant/ask with a language model", () => {
 
     expect(res.body.answer).toBe("Fristen er 10. april [2].");
   });
+
   it("reads a list of sources in one bracket", async () => {
     fakeModel({
       terms: ["mva-melding"],
@@ -304,6 +305,11 @@ describe("POST /api/assistant/ask with the rules as source [1]", () => {
     expect(prompt).toContain("Enkeltpersonforetak (ENK), registrert i");
     expect(prompt).toContain(
       "Fristene de neste tolv månedene: 10. desember 2026, 10. februar 2027, 12. april 2027 (flyttet fra lørdag 10. april),",
+    );
+    // All obligations' next deadlines together, so "the next deadline" is
+    // read from one line
+    expect(prompt).toContain(
+      "De neste fristene for foretaket, alle plikter samlet, den første først: 10. desember 2026 (Mva-melding);",
     );
     expect(prompt).toContain("Leverer mva-melding annenhver måned");
     // Only the company's own term, not the annual one

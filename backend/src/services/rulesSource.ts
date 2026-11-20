@@ -151,6 +151,36 @@ function describeAnswers(answers: Answers): string[] {
   return lines;
 }
 
+// How many deadlines the summary at the top lists
+const NEXT_SHOWN = 6;
+
+// The company's next deadlines across all its obligations, earliest first.
+// Each obligation lists its own dates further down; without this line a
+// model asked for "the next deadline" took the first obligation it read
+// (the VAT return, 10 December) over an earlier one (the a-melding,
+// 7 December).
+function nextDeadlinesLine(
+  obligations: { title: { nb: string }; upcomingDeadlines: IsoDate[] }[],
+): string[] {
+  const next = obligations
+    .flatMap((obligation) =>
+      obligation.upcomingDeadlines.map((date) => ({
+        date,
+        title: obligation.title.nb,
+      })),
+    )
+    .sort(
+      (a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title),
+    )
+    .slice(0, NEXT_SHOWN);
+  if (next.length === 0) return [];
+  return [
+    `De neste fristene for foretaket, alle plikter samlet, den første først: ${next
+      .map(({ date, title }) => `${formatDateNb(date)} (${title})`)
+      .join("; ")}.`,
+  ];
+}
+
 function answersLine(answers: Answers): string[] {
   const lines = describeAnswers(answers);
   return lines.length > 0 ? [`Brukerens svar: ${lines.join(" ")}`] : [];
@@ -213,6 +243,7 @@ export function companyRulesSource(
       `Foretaket: ${form}, ${vat}. Dagens dato: ${formatDateNb(today.toISOString().slice(0, 10))}. Der en dato under er flyttet fra en helg eller helligdag, står den opprinnelige datoen i parentes.`,
       ...answersLine(assessment.answers),
       ...warnings,
+      ...nextDeadlinesLine(result.obligations),
       ...blocks,
     ].join("\n\n"),
   };

@@ -50,16 +50,18 @@ function fieldOf(data: unknown, name: string): unknown {
     : undefined;
 }
 
-export async function apiFetch<T>(
+// Sends a request to the API and returns its response as it is, or null
+// when the API could not be reached. Failures are logged with the request
+// id, which the API logs too.
+export async function apiRequest(
   path: string,
   { method = "GET", body }: ApiOptions = {},
-): Promise<ApiResult<T>> {
-  const headers: Record<string, string> = { Accept: "application/json" };
+  accept = "application/json",
+): Promise<Response | null> {
+  const headers: Record<string, string> = { Accept: accept };
   if (body !== undefined) headers["Content-Type"] = "application/json";
   const address = await clientAddress();
   if (address) headers["X-Forwarded-For"] = address;
-  // The API logs every request with this id, so a failure logged here can
-  // be found in the API's log too
   const requestId = randomUUID();
   headers["X-Request-Id"] = requestId;
   // The path without its query string: tokens are never logged
@@ -78,12 +80,24 @@ export async function apiFetch<T>(
       `API call failed: ${call} could not reach the API at ${apiUrl()} (request ${requestId})`,
       error instanceof Error && error.cause ? error.cause : error,
     );
-    return { ok: false, status: 0, error: "The API could not be reached" };
+    return null;
   }
   if (response.status >= 500) {
     console.error(
       `API call failed: ${call} answered ${response.status} (request ${requestId})`,
     );
+  }
+  return response;
+}
+
+// Calls the API and reads its JSON answer
+export async function apiFetch<T>(
+  path: string,
+  options: ApiOptions = {},
+): Promise<ApiResult<T>> {
+  const response = await apiRequest(path, options);
+  if (!response) {
+    return { ok: false, status: 0, error: "The API could not be reached" };
   }
 
   const data: unknown =

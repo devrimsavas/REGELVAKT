@@ -6,7 +6,7 @@
 
 .columns {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: 2fr 1fr 1fr;
   gap: var(--ds-size-10);
   padding-block: var(--ds-size-10);
 }
