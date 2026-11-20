@@ -1,0 +1,68 @@
+# Runs Regelvakt on a server: the web app, the API and its database.
+#   docker compose -f docker-compose.prod.yml up -d --build
+# The same file runs every environment (production, staging); what differs
+# between them is only in the server's .env, never in this file.
+#
+# Only the web app can be reached, and only from the server itself
+# (127.0.0.1): Cloudflare Tunnel (cloudflared) brings visitors to it, so no
+# port is open to the internet. The API and the database are reachable
+# only inside Docker's network.
+
+# Its own project name, so it never touches the containers or the data of
+# docker-compose.yml, or of another app's project, on the same machine
+name: regelvakt-server
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-regelvakt}
+      POSTGRES_USER: ${DB_USER:-regelvakt}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+    volumes:
+      # The data outlives the container: removed only with "down -v"
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # These override .env: inside Docker the database is the "db" service
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME:-regelvakt}
+      DB_USER: ${DB_USER:-regelvakt}
+      PORT: "3000"
+    # No ports: only the web app calls the API
+    depends_on:
+      db:
+        condition: service_healthy
+    # The app finishes the running reminder or knowledge work in up to 30
+    # seconds after it is told to stop; give it a little more than that
+    stop_grace_period: 40s
+
+  web:
+    build: ./web
+    restart: unless-stopped
+    environment:
+      # The API inside Docker's network
+      API_URL: http://api:3000
+      # Behind Cloudflare the visitor's address is in cf-connecting-ip
+      CLIENT_IP_HEADER: ${CLIENT_IP_HEADER:-cf-connecting-ip}
+    ports:
+      # Only on the server itself, for cloudflared. 3002 by default, since
+      # another app on the same server may already use 3001
+      - "127.0.0.1:${WEB_PORT:-3002}:3001"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  db-data:

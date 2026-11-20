@@ -150,6 +150,9 @@ jobs:
           sed -i "s/^AI_PROVIDER=.*/AI_PROVIDER=/" .env
           sed -i "s/^KNOWLEDGE_UPDATES=.*/KNOWLEDGE_UPDATES=off/" .env
 
+      - name: The server's Compose file is valid
+        run: docker compose -f docker-compose.prod.yml config --quiet
+
       - name: Build and start
         run: docker compose up -d --build --wait --wait-timeout 180
 

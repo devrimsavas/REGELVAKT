@@ -1,7 +1,5 @@
 # Regelvakt
 
-[![CI](https://github.com/devrimsavas/REGELVAKT/actions/workflows/ci.yml/badge.svg)](https://github.com/devrimsavas/REGELVAKT/actions/workflows/ci.yml)
-
 Regelvakt shows small Norwegian businesses which official obligations apply to _their_ company, explains them in plain language, reminds them before deadlines, and answers questions with sources from official pages.
 
 > Status: early development (pilot). Not tax or accounting advice.
@@ -161,29 +159,82 @@ docker compose logs -f api
 - The web image runs Next.js's standalone server (only the files it needs) as the `node` user; `/health` is its health check.
 - The API image is built in two stages: TypeScript is compiled in the first, the second holds only the compiled code, the API docs and the production dependencies, and runs as the unprivileged `node` user. `docker stop` gives the app 40 seconds to finish running work.
 
+
+### Running on a server
+
+`docker-compose.prod.yml` runs the same three containers on a Linux server, for production or for staging. Every difference between environments is in the server's `.env`; the files in Git are the same everywhere. It has its own project name (`regelvakt-server`), so it never touches another app's containers or data on the same server.
+
+```
+visitor ──HTTPS──> Cloudflare ──tunnel──> cloudflared ──> web (127.0.0.1:3002) ──> api ──> db
+                                          (on the server)      (Docker network only)
+```
+
+- **No open ports.** `cloudflared` keeps an outgoing connection to Cloudflare, which sends visitors to the web app. The web app listens only on `127.0.0.1`, and the API and the database only inside Docker's network, so neither can be reached from outside, not even from the local network. (Docker opens published ports past the firewall, which is why nothing else is published.)
+- **Restarts by itself.** Every container has `restart: unless-stopped`, so the app comes back after a crash or a reboot.
+- **Nightly backups.** `scripts/backup-db.sh` writes a compressed dump of the database to `backups/` and keeps 14 days; `scripts/restore-db.sh` puts one back, with the web app and the API stopped meanwhile.
+
+**First start**, as a user with Docker on the server:
+
+```bash
+git clone https://github.com/devrimsavas/REGELVAKT.git regelvakt
+cd regelvakt
+cp docker.env_example .env
+nano .env        # see the list below
+docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml ps     # all three "healthy"
+```
+
+**What to set in `.env` on a server**
+
+| Setting                                          | Production                                                            | Staging                            |
+| ------------------------------------------------ | --------------------------------------------------------------------- | ---------------------------------- |
+| `DB_PASSWORD`                                    | `openssl rand -hex 24`                                                | another one                        |
+| `SUBSCRIPTION_SECRET`                            | `openssl rand -base64 32`                                             | another one                        |
+| `WEB_PORT`                                       | a free port on the server, `3002` if 3001 is taken                    | another free port                  |
+| `CLIENT_IP_HEADER`                               | empty (`cf-connecting-ip` is used)                                    | the same                           |
+| `WEB_APP_URL`                                    | `https://regelvakt.devrimdev.no`                                      | the staging address                |
+| `EMAIL_PROVIDER`, `RESEND_API_KEY`, `EMAIL_FROM` | `resend`, a key of its own, an address on a domain verified in Resend | `log`: no real emails from staging |
+| `AI_PROVIDER`, `GEMINI_API_KEY`, `GEMINI_MODEL`  | `gemini` with a paid key (the free tier may use the questions)        | the same, or empty to turn it off  |
+
+`DB_HOST`, `DB_PORT` and `PORT` are set by the Compose file. `API_PORT` is not used on a server.
+
+**Cloudflare Tunnel**: in the Cloudflare dashboard (Zero Trust → Networks → Tunnels), use the server's tunnel (or install a connector with the command it shows) and add a published application: the hostname (`regelvakt.devrimdev.no`) and the service `http://localhost:3002` (the `WEB_PORT`).
+
+**Updating**: `git pull`, then `docker compose -f docker-compose.prod.yml up -d --build`. The API applies new migrations when it starts.
+
+**Logs**: `docker compose -f docker-compose.prod.yml logs -f api` (JSON lines; `| grep <request id>` finds one request).
+
+**Backups**: run `bash scripts/backup-db.sh` once by hand, then add it to cron (`crontab -e`):
+
+```
+30 3 * * * cd /home/USER/regelvakt && bash scripts/backup-db.sh >> backups/backup.log 2>&1
+```
+
+To restore: `bash scripts/restore-db.sh backups/regelvakt-<date>.sql.gz`. Backups on the same server do not survive the server itself, so copy them elsewhere now and then, and take a snapshot in the provider's panel before larger changes.
+
 ## API
 
 Interactive docs: `http://localhost:3000/api/docs` (generated by `npm run dev`).
 
-| Endpoint                                  | Description                                                                                                                                           |
-| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /api`                                | API root                                                                                                                                              |
-| `GET /api/health`                         | `{ status: "ok" }`, or 503 when the database is down (Docker health check, uptime monitors)                                                           |
-| `GET /api/companies/:orgNumber`           | Company data from Brønnøysundregistrene in the app's own shape                                                                                        |
-| `GET /api/companies/:orgNumber/questions` | The questions this company is asked before an assessment                                                                                              |
-| `POST /api/assessments`                   | `{ orgNumber, answers }` → stored assessment with obligations, deadlines and warnings                                                                 |
-| `GET /api/assessments/:id`                | A stored assessment, recalculated with today's date; `answersNeedUpdate` says when new company data needs new answers                                 |
-| `GET /api/assessments/:id/questions`      | The questions for changing the answers, with the current answers (no Brreg call)                                                                      |
-| `PATCH /api/assessments/:id`              | `{ answers }` → the assessment with new answers; subscriptions are kept                                                                               |
-| `POST /api/assistant/ask`                 | `{ question, language?, assessmentId? }` → an answer with numbered sources (`mode: answer`), or the most relevant official sections (`mode: sources`) |
-| `GET /api/assistant/status`               | Whether the knowledge base is ready, and which language model is used                                                                                 |
-| `GET /api/assessments/:id/calendar.ics`   | The deadlines as a calendar to subscribe to (`?lang=nb\|en`)                                                                                          |
-| `DELETE /api/assessments/:id`             | Delete an assessment with its reminders and email addresses                                                                                           |
-| `POST /api/assessments/:id/subscriptions` | `{ email, language?, reminderDays?, consent: true }` → confirmation email (202, same answer for every address)                                        |
-| `POST /api/subscriptions/confirm`         | `{ token }` from the confirmation email → active subscription and its `manageToken`                                                                   |
-| `POST /api/subscriptions/lookup`          | `{ token }` (manage token) → the subscription                                                                                                         |
-| `PATCH /api/subscriptions`                | `{ token, language?, reminderDays? }` → changed subscription                                                                                          |
-| `POST /api/subscriptions/unsubscribe`     | `{ token }` → stops the reminders and deletes the address                                                                                             |
+| Endpoint | Description |
+| --- | --- |
+| `GET /api` | API root |
+| `GET /api/health` | `{ status: "ok" }`, or 503 when the database is down (Docker health check, uptime monitors) |
+| `GET /api/companies/:orgNumber` | Company data from Brønnøysundregistrene in the app's own shape |
+| `GET /api/companies/:orgNumber/questions` | The questions this company is asked before an assessment |
+| `POST /api/assessments` | `{ orgNumber, answers }` → stored assessment with obligations, deadlines and warnings |
+| `GET /api/assessments/:id` | A stored assessment, recalculated with today's date; `answersNeedUpdate` says when new company data needs new answers |
+| `GET /api/assessments/:id/questions` | The questions for changing the answers, with the current answers (no Brreg call) |
+| `PATCH /api/assessments/:id` | `{ answers }` → the assessment with new answers; subscriptions are kept |
+| `POST /api/assistant/ask` | `{ question, language?, assessmentId? }` → an answer with numbered sources (`mode: answer`), or the most relevant official sections (`mode: sources`) |
+| `GET /api/assistant/status` | Whether the knowledge base is ready, and which language model is used |
+| `GET /api/assessments/:id/calendar.ics` | The deadlines as a calendar to subscribe to (`?lang=nb\|en`) |
+| `DELETE /api/assessments/:id` | Delete an assessment with its reminders and email addresses |
+| `POST /api/assessments/:id/subscriptions` | `{ email, language?, reminderDays?, consent: true }` → confirmation email (202, same answer for every address) |
+| `POST /api/subscriptions/confirm` | `{ token }` from the confirmation email → active subscription and its `manageToken` |
+| `POST /api/subscriptions/lookup` | `{ token }` (manage token) → the subscription |
+| `PATCH /api/subscriptions` | `{ token, language?, reminderDays? }` → changed subscription |
+| `POST /api/subscriptions/unsubscribe` | `{ token }` → stops the reminders and deletes the address |
 
 Errors: 400 invalid input (all problems listed), 404 company or assessment not found, 410 company struck off, 413 request body over 10 kb, 422 organization form not supported yet, 429 too many requests (with `retryAfterSeconds`), 502 Brreg unavailable.
 
@@ -210,7 +261,6 @@ Every response carries an `X-Request-Id` header; the same id is in the API's log
 **Runs as one process.** The rate limit counts and the Brreg cache are kept in the process's memory, which fits a single server. The reminder job is safe with more than one process (a PostgreSQL advisory lock lets only one run go on), but the rate limits would then count per process.
 
 ### Phase 2 – Rule engine
-
 - [x] Data model design (see below)
 - [x] Types, business day and Norwegian public holiday calculation
 - [x] Questions and obligation definitions for ENK and AS (deadlines verified against Skatteetaten and published 2026 dates)
@@ -245,21 +295,21 @@ Every response carries an `X-Request-Id` header; the same id is in the API's log
 
 **Search quality** (`npm run eval:assistant`, 30 questions, a right page among the first five sources, 19–20 November 2026, before the link correction below)
 
-| Search terms from                     | Found          | Time for 30 questions |
-| ------------------------------------- | -------------- | --------------------- |
-| The question itself (no model)        | 22 / 30 (73 %) | seconds               |
-| `qwen3.8` 27B, local, half on the CPU | 25 / 30 (83 %) | about 18 minutes      |
-| `gemma4:12b`, local, all on the GPU   | 26 / 30 (87 %) | under 5 minutes       |
+| Search terms from | Found | Time for 30 questions |
+| --- | --- | --- |
+| The question itself (no model) | 22 / 30 (73 %) | seconds |
+| `qwen3.8` 27B, local, half on the CPU | 25 / 30 (83 %) | about 18 minutes |
+| `gemma4:12b`, local, all on the GPU | 26 / 30 (87 %) | under 5 minutes |
 
 All four misses with `gemma4:12b` were missing sources, not search: the annual accounts link in the rules led nowhere, and Lovdata does not allow automatic reading. Both are corrected in rules 2026.3.
 
 **Answer quality** (`npm run eval:answers`: 11 questions, each with the dates a right answer must hold and the wrong ones it must not; three of them about a company, as of 20 November 2026; one with no answer in the sources, which must say so instead of guessing)
 
-| Model and setting                                                             | Right answers   | Time                |
-| ----------------------------------------------------------------------------- | --------------- | ------------------- |
-| `gemma4:12b`, local, thinking on                                              | 8–9 / 10        | about 3 minutes     |
-| `gemma4:12b`, local, thinking off                                             | 10 / 10 (100 %) | under half a minute |
-| `gemma4:12b`, local, with the question about the next deadline (11 questions) | not run yet     |                     |
+| Model and setting | Right answers | Time |
+| --- | --- | --- |
+| `gemma4:12b`, local, thinking on | 8–9 / 10 | about 3 minutes |
+| `gemma4:12b`, local, thinking off | 10 / 10 (100 %) | under half a minute |
+| `gemma4:12b`, local, with the question about the next deadline (11 questions) | not run yet | |
 
 With thinking on, one question in each run came back empty, a different one each time. Ollama's own figures for it: a prompt of 2,707 tokens, then 5,482 tokens of "thinking" until the context window of 8,192 was full, and a stop for length before any answer was written. The assistant only reads the sources it is given and writes a few sentences, with the dates already worked out in [1], so the model is now asked not to think: no empty answers, the same answers otherwise, about seven times faster. An empty answer from Ollama is logged with those figures, and the assistant logs when it falls back to the sources because of one.
 
@@ -374,6 +424,7 @@ The first real question, "Når må jeg levere mva-meldingen?", got an answer tha
 - Design: the assessment page had every section under each other and needed long scrolling, so it is now split into tabs, each a page of its own; the header got the assistant, about and contact pages, with a menu button on small screens
 - The assistant's rules source starts with the company's next deadlines; a robot marks the assistant; the reminder form has an invisible bot check (a hidden field and a minimum time) instead of a question people must answer; real email through Resend tested
 - Privacy page, and end-to-end tests (26, Playwright) through the whole web app with accessibility checks in light and dark mode, against the real API with stand-ins for Brreg and the language model; the API's Brreg address is now a setting (`BRREG_API_URL`)
+- Running on a server: `docker-compose.prod.yml` (only the web app on 127.0.0.1, for Cloudflare Tunnel), nightly backups with `scripts/backup-db.sh` and restoring with `scripts/restore-db.sh`; CI checks the server's Compose file
 
 ## Disclaimer
 

@@ -25,3 +25,6 @@ Thumbs.db
 coverage/
 # Generated API docs
 swagger_output.json
+
+# Database backups on a server
+backups/
